@@ -4,7 +4,7 @@ CFLAGS  := -Wall -Wextra -O2 -Iinclude
 
 # Directories
 SRC_DIR := src
-BUILD_DIR := build
+BUILD_DIR := build/obj/
 
 # Target binary name
 TARGET := app
