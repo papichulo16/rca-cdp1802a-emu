@@ -22,8 +22,6 @@ uint8_t cpu_r_ma_pins(cdp1802a_chip_t* c) {
   return (uint8_t) (c->pinout & (0xff << PIN_MA0));
 }
 
-void opc_decode(cdp1802a_chip_t* c) {}
-
 void handle_mc_end(cdp1802a_chip_t* c) {
   uint8_t status = (uint8_t) (c->pinout & (3 << PIN_SC0));
 
@@ -34,8 +32,6 @@ void handle_mc_end(cdp1802a_chip_t* c) {
 
     // OPF
     case 0:
-      c->regs.in = c->data_bus;
-
       opc_decode(c);
 
       break;
