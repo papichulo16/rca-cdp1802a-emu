@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CDP1802A_GET_PIN(po, p) (po & (1 << p))
-
 typedef enum {
     PIN_CLOCK,
     PIN_WAIT,
@@ -17,23 +15,23 @@ typedef enum {
 
     PIN_MRD,
 
-    PIN_BUS7,
-    PIN_BUS6,
-    PIN_BUS5,
-    PIN_BUS4,
-    PIN_BUS3,
-    PIN_BUS2,
-    PIN_BUS1,
     PIN_BUS0,
+    PIN_BUS1,
+    PIN_BUS2,
+    PIN_BUS3,
+    PIN_BUS4,
+    PIN_BUS5,
+    PIN_BUS6,
+    PIN_BUS7,
 
     PIN_N2,
     PIN_N1,
     PIN_N0,
 
-    PIN_EF4,
-    PIN_EF3,
-    PIN_EF2,
     PIN_EF1,
+    PIN_EF2,
+    PIN_EF3,
+    PIN_EF4,
 
     PIN_MA0,
     PIN_MA1,
@@ -59,6 +57,15 @@ typedef enum {
     PIN_COUNT
 } cdp1802_pin_t;
 
+typedef enum {
+
+  RDY,
+  MRD,
+  MWR,
+  NON_MEM
+
+} mach_cycle_t;
+
 typedef struct {
   uint16_t addr;
   uint8_t data;
@@ -71,7 +78,7 @@ typedef struct {
   bool df;
   uint8_t b;
 
-  uint16_t scratchpad[16];
+  uint16_t sp_r[16]; // scratchpad registers
 
   uint8_t xp; // X is high nibble P is low nibble
   uint8_t in; // I is high nibble N is low nibble
@@ -85,11 +92,26 @@ typedef struct {
 
 typedef struct {
 
+  mach_cycle_t mc;
+  uint8_t t_state;
+
+} cpu_state_t;
+
+typedef struct {
+
   uint64_t pinout;
+  uint16_t addr;
+  uint8_t data_bus;
+
   regs_t regs;
+
+  cpu_state_t state;
   
 } cdp1802a_chip_t;
 
-void hw_oscillate_clock();
+void set_bit(uint64_t* n, uint8_t k);
+void clr_bit(uint64_t* n, uint8_t k);
 
-extern cdp1802a_chip_t chip;
+void hw_sys_init(cdp1802a_chip_t* chip);
+void hw_sys_run(cdp1802a_chip_t* chip);
+
