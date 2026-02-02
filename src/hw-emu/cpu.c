@@ -23,21 +23,24 @@ uint8_t cpu_r_ma_pins(cdp1802a_chip_t* c) {
 }
 
 void handle_mc_end(cdp1802a_chip_t* c) {
-  uint8_t status = (uint8_t) (c->pinout & (3 << PIN_SC0));
+  uint8_t status = (uint8_t) ((c->pinout & (3 << PIN_SC0)) >> PIN_SC0);
 
   c->state.t_state = 0;
   c->state.mc = NON_MEM;
+  c->regs.sp_r[c->regs.xp & 0xf]++;
 
   switch (status) {
 
     // OPF
     case 0:
-      opc_decode(c);
+      cpu_opc_decode(c);
 
       break;
 
     // EXEC
     case 1:
+      cpu_execute(c);
+
       break;
 
     // DMA
@@ -158,14 +161,19 @@ void non_memory(cdp1802a_chip_t* c) {
 void opc_fetch (cdp1802a_chip_t* c) {
 
   c->state.mc = MRD;
-  c->state.t_state = 0;
+
+  // OPF
+  c->pinout = (c->pinout & ~(3 << PIN_SC0));
+  c->addr = c->regs.sp_r[c->regs.xp & 0xf];
 
   mem_read(c);
 
 }
 
-
 void cpu_handle_state(cdp1802a_chip_t* c) {
+
+  if (c->idle)
+    return;
 
   switch (c->state.mc) {
     case RDY:

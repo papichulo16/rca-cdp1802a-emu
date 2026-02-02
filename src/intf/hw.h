@@ -66,6 +66,12 @@ typedef enum {
 
 } mach_cycle_t;
 
+typedef enum {
+
+  ADD
+
+} alu_oper_t;
+
 typedef struct {
   uint16_t addr;
   uint8_t data;
@@ -99,6 +105,19 @@ typedef struct {
 
 typedef struct {
 
+  bool mem_trans;
+  bool mem_hi;
+  void* trans_src;
+  void* trans_dest;
+
+  bool alu;
+  alu_oper_t alu_oper;
+
+} cpu_exec_sm_t;
+
+typedef struct {
+
+  bool idle;
   uint64_t pinout;
   uint16_t addr;
   uint8_t data_bus;
@@ -106,6 +125,7 @@ typedef struct {
   regs_t regs;
 
   cpu_state_t state;
+  cpu_exec_sm_t exec;
   
 } cdp1802a_chip_t;
 
