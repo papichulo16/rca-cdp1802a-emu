@@ -68,7 +68,11 @@ typedef enum {
 
 typedef enum {
 
-  ADD
+  ADD,
+
+  OR,
+  AND,
+  XOR,
 
 } alu_oper_t;
 
@@ -80,8 +84,8 @@ typedef struct {
 
 typedef struct {
 
-  uint8_t d;
   bool df;
+  uint8_t d;
   uint8_t b;
 
   uint16_t sp_r[16]; // scratchpad registers
@@ -92,7 +96,6 @@ typedef struct {
   uint8_t t; // holds old XP pair on interrupt
 
   bool io;
-  bool q;
 
 } regs_t;
 

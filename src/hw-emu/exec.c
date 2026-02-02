@@ -21,6 +21,21 @@ void cpu_handle_alu(cdp1802a_chip_t* c) {
       c->regs.d = temp;
 
       break;
+
+    case AND:
+      c->regs.d &= c->regs.b;
+
+      break;
+
+    case OR:
+      c->regs.d |= c->regs.b;
+
+      break;
+
+    case XOR:
+      c->regs.d ^= c->regs.b;
+
+      break;
   }
 }
 
@@ -37,8 +52,11 @@ void _cpu_execute(cdp1802a_chip_t* c) {
 }
 
 void cpu_execute(cdp1802a_chip_t* c) {
-  _cpu_execute(c);
-  memset(&c->exec, '\0', sizeof(cpu_exec_sm_t));
+
   c->state.mc = RDY;
+  _cpu_execute(c);
+
+  memset(&c->exec, '\0', sizeof(cpu_exec_sm_t));
+
 }
 

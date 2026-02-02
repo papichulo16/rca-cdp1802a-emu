@@ -20,10 +20,17 @@ void i_reg_0(cdp1802a_chip_t* c) {
   switch (c->regs.in & 0xf) {
     // idl
     case 0:
+      c->idle = true;
+
       break;
 
     // ldn r{1-f}
     default:
+      exec_mem_trans(c, &c->regs.d, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.in & 0xf];
+
       break;
   }
 
@@ -58,6 +65,10 @@ void i_reg_4(cdp1802a_chip_t* c) {
 void i_reg_5(cdp1802a_chip_t* c) {
 
   // str mrn??
+  // store D at memory region R points to
+  c->state.mc = MWR;
+  c->addr = c->regs.sp_r[c->regs.in & 0xf];
+  c->data_bus = c->regs.d;
 
 }
 
@@ -168,24 +179,28 @@ void i_reg_7(cdp1802a_chip_t* c) {
 void i_reg_8(cdp1802a_chip_t* c) {
 
   // glo r{0-f}
+  c->regs.d = (uint8_t) (c->regs.sp_r[c->regs.in & 0xf] & 0xff);
 
 }
 
 void i_reg_9(cdp1802a_chip_t* c) {
 
   // ghi r{0-f}
+  c->regs.d = (uint8_t) (c->regs.sp_r[c->regs.in & 0xf] >> 8);
 
 }
 
 void i_reg_a(cdp1802a_chip_t* c) {
 
   // plo r{0-f} 
+  c->regs.sp_r[c->regs.in & 0xf] = (c->regs.sp_r[c->regs.in & 0xf] & 0xff00) | ((uint16_t) c->regs.d);
 
 }
 
 void i_reg_b(cdp1802a_chip_t* c) {
 
   // phi r{0-f}
+  c->regs.sp_r[c->regs.in & 0xf] = (c->regs.sp_r[c->regs.in & 0xf] & 0x00ff) | ((uint16_t) c->regs.d << 8);
 
 }
 
@@ -225,12 +240,16 @@ void i_reg_c(cdp1802a_chip_t* c) {
 void i_reg_d(cdp1802a_chip_t* c) {
 
   // sep 
+  c->regs.xp = (c->regs.xp & 0xf0) | (c->regs.in & 0x0f);
+  c->pinout = (c->pinout & ~(3 << PIN_SC0));
+  c->state.mc = RDY;
 
 }
 
 void i_reg_e(cdp1802a_chip_t* c) {
 
   // sex
+  c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.in & 0x0f) << 4);
 
 }
 
@@ -272,18 +291,41 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
     // ldi
     case 8:
+      exec_mem_trans(c, &c->regs.d, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // ori
     case 9:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, OR);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // ani 
     case 0xa:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, AND);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // xri
     case 0xb:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, XOR);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // adi
