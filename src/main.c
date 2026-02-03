@@ -1,11 +1,14 @@
-//Still need to make this work for the opcodes, this is just my base to work off
-
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+	int opcode;
+	const char *mnemonic;
+} Instruction;
 
 struct Node {
-	int key;
+	Instruction instr;
 	struct Node* left;
 	struct Node* right;
 	int height;
@@ -18,9 +21,9 @@ int getHeight(struct Node* n) {
 	return n->height;
 }
 
-struct Node* createNode(int key) {
+struct Node* createNode(Instruction instr) {
 	struct Node* node = (struct Node*)malloc(sizeof(struct Node));
-	node->key = key;
+	node->instr = instr;
 	node->left = NULL;
 	node->right = NULL;
 	node->height = 1;
@@ -71,45 +74,85 @@ struct Node* lRotate(struct Node* x) {
 	return y;
 }
 
-struct Node* insert(struct Node* node, int key) {
-	if (node == NULL) {
-		return createNode(key);
-	}
+struct Node* insert(struct Node* node, Instruction instr) {
+    if (node == NULL) {
+        return createNode(instr);
+    }
 
-	if (key < node->key) {
-		node->left = insert(node->left, key);
-	} else if (key > node->key) {
-		node->right = insert(node->right, key);
+    if (instr.opcode < node->instr.opcode) {
+        node->left = insert(node->left, instr);
+    } else if (instr.opcode > node->instr.opcode) {
+        node->right = insert(node->right, instr);
+    } else {
+        return node;
+    }
+
+    node->height = 1 + max(getHeight(node->left), getHeight(node->right));
+    int balance = getBalanceFactor(node);
+
+    // Left Left
+    if (balance > 1 && instr.opcode < node->left->instr.opcode)
+        return rRotate(node);
+
+    // Right Right
+    if (balance < -1 && instr.opcode > node->right->instr.opcode)
+        return lRotate(node);
+
+    // Left Right
+    if (balance > 1 && instr.opcode > node->left->instr.opcode) {
+        node->left = lRotate(node->left);
+        return rRotate(node);
+    }
+
+    // Right Left
+    if (balance < -1 && instr.opcode < node->right->instr.opcode) {
+        node->right = rRotate(node->right);
+        return lRotate(node);
+    }
+
+    return node;
+}
+
+Instruction* findByOpcode(struct Node* root, int opcode) {
+	if (!root) {
+		return NULL;
+	}
+	if (opcode == root->instr.opcode) {
+		return &root->instr;
+	} else if (opcode < root->instr.opcode) {
+		return findByOpcode(root->left, opcode);
 	} else {
-		return node;
+		return findByOpcode(root->right, opcode);
+	}
+}
+
+Instruction* findByMnemonic(struct Node* root, const char* mnemonic) {
+	if (!root) {
+		return NULL;
 	}
 
-	node->height = 1 + max(getHeight(node->left), getHeight(node->right));
-	int balance = getBalanceFactor(node);
+	struct Node* queue[256];
+	int front = 0;
+	int back = 0;
 
-	//Left left
-	if (balance > 1 && key < node->left->key) {
-		return rRotate(node);
+	queue[back++] = root;
+
+	while (front < back) {
+		struct Node* curr = queue[front++];
+
+		if (strcmp(curr->instr.mnemonic, mnemonic) == 0) {
+			return &curr->instr;
+		}
+
+		if (curr->left) {
+			queue[back++] = curr->left;
+		}
+
+		if (curr->right) {
+			queue[back++] = curr->right;
+		}
 	}
-
-	//Right right
-	if (balance < -1 && key > node->right->key) {
-		return lRotate(node);
-	}
-
-	//Left right
-	if (balance > 1 && key > node->left->key) {
-		node->left = lRotate(node->left);
-		return rRotate(node);
-	}
-
-	//Right left
-	if (balance < -1 && key < node->right->key) {
-		node->right = rRotate(node->right);
-		return lRotate(node);
-	}
-
-	return node;
+	return NULL;
 }
 
 //void inOrder(struct Node* root) {
@@ -121,18 +164,21 @@ struct Node* insert(struct Node* node, int key) {
 //}
 
 int main() {
-	struct Node* root = NULL;
+    struct Node* root = NULL;
 	//testing vals
-	//root = insert(root, 6);
-	//root = insert(root, 7);
-	//root = insert(root, 67);
-	//root = insert(root, 69);
-	//root = insert(root, 1337);
-	//root = insert(root, 420);
+    //Instruction insts[] = {
+    //    {0x00, "BAL"},
+    //    {0x67, "LSS"},
+    //    {0x69, "HI"},
+    //    {0x17, "RAH"},
+    //    {0x13, "FIH"}
+    //};
 
-	//printf("inOrder: ");
-	//inOrder(root);
+    //for (int i = 0; i < 5; i++) {
+	//	root = insert(root, insts[i]);
+	//}
 
-	return 0;
+    return 0;
 }
+
 	
