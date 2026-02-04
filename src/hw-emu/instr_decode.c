@@ -59,6 +59,12 @@ void i_reg_3(cdp1802a_chip_t* c) {
 void i_reg_4(cdp1802a_chip_t* c) {
 
   // lda r{0-f}
+  exec_mem_trans(c, &c->regs.d, &c->data_bus);
+
+  c->state.mc = MRD;
+  c->addr = c->regs.sp_r[c->regs.in & 0xf];
+
+  c->regs.sp_r[c->regs.in & 0xf]++;
 
 }
 
@@ -77,6 +83,7 @@ void i_reg_6(cdp1802a_chip_t* c) {
   switch (c->regs.in & 0xf) {
     // irx rx
     case 0:
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
       break;
 
     // out N
@@ -111,66 +118,150 @@ void i_reg_7(cdp1802a_chip_t* c) {
   switch (c->regs.in & 0xf) {
     // ret
     case 0:
+
       break;
 
     // dis 
+    // returns from ISR as well
     case 1:
+      //c->regs.io = false;
+
       break;
 
-    // ldxa
+    // ldxa (pop)
     case 2:
+      exec_mem_trans(c, &c->regs.d, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
       break;
 
-    // stxd
+    // stxd (push)
     case 3:
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]--;
+
+      c->data_bus = c->regs.d;
+
+      c->state.mc = MWR;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // adc
     case 4:
+      exec_alu_oper(c, ADD);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // sdb 
     case 5:
+      exec_alu_oper(c, SUB);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+      c->exec.reversed = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // shrc 
     case 6:
+      exec_alu_oper(c, SHRC);
+
       break;
 
     // smb 
     case 7:
+      exec_alu_oper(c, SUB);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // sav 
     case 8:
+      c->data_bus = c->regs.xp;
+
+      c->state.mc = MWR;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // mark 
     case 9:
+      c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.xp & 0x0f) << 4);
+
+      c->data_bus = c->regs.xp;
+
+      c->state.mc = MWR;
+      c->addr = c->regs.sp_r[2];
+
+      c->regs.sp_r[2]--;
+
       break;
 
     // req 
     case 0xa:
+      c->pinout = c->pinout & ~(1 << PIN_Q);
+
       break;
 
     // seq
     case 0xb:
+      c->pinout = c->pinout | (1 << PIN_Q);
+
       break;
 
     // adci
     case 0xc:
+      exec_alu_oper(c, ADD);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // sdbi 
     case 0xd:
+      exec_alu_oper(c, SUB);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+      c->exec.reversed = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // shlc 
     case 0xe:
+      exec_alu_oper(c, SHLC);
+
       break;
 
     // smbi 
     case 0xf:
+      exec_alu_oper(c, SUB);
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      c->exec.carry = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
   }
 
@@ -259,34 +350,80 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
     // ldx
     case 0:
+      exec_mem_trans(c, &c->regs.d, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
       break;
 
     // or 
     case 1:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, OR);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // and
     case 2:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, AND);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // xor
     case 3:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, XOR);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // add
     case 4:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, ADD);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // sd 
     case 5:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, SUB);
+      c->exec.reversed = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // shr 
     case 6:
+      exec_alu_oper(c, SHR);
+
       break;
 
     // sm 
     case 7:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, SUB);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
       break;
 
     // ldi
@@ -340,14 +477,29 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
     // sdi 
     case 0xd:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, SUB);
+      c->exec.reversed = true;
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
 
     // shl 
     case 0xe:
+      exec_alu_oper(c, SHL);
+
       break;
 
     // smi 
     case 0xf:
+      exec_mem_trans(c, &c->regs.b, &c->data_bus);
+      exec_alu_oper(c, SUB);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+
       break;
   }
 

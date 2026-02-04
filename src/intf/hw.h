@@ -69,10 +69,17 @@ typedef enum {
 typedef enum {
 
   ADD,
+  SUB,
 
   OR,
   AND,
   XOR,
+
+  SHRC,
+  SHLC,
+  SHL,
+  SHR
+
 
 } alu_oper_t;
 
@@ -114,6 +121,8 @@ typedef struct {
   void* trans_dest;
 
   bool alu;
+  bool carry;
+  bool reversed;
   alu_oper_t alu_oper;
 
 } cpu_exec_sm_t;

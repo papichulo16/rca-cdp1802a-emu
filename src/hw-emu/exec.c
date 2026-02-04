@@ -7,10 +7,14 @@
 
 void cpu_handle_alu(cdp1802a_chip_t* c) {
   uint8_t temp = 0;
+  uint8_t lsb, msb;
 
   switch (c->exec.alu_oper) {
     case ADD:
       temp = c->regs.d + c->regs.b;
+
+      if (c->exec.carry)
+        temp += c->regs.df;
          
       // OF
       if (temp < c->regs.d)
@@ -20,6 +24,26 @@ void cpu_handle_alu(cdp1802a_chip_t* c) {
 
       c->regs.d = temp;
 
+      break;
+
+    case SUB:
+      if (c->exec.reversed) {
+        temp = c->regs.b - c->regs.d;
+        if (c->exec.carry)
+          temp -= (c->regs.df ? 0 : 1); 
+      } else {
+        temp = c->regs.d - c->regs.b;
+        if (c->exec.carry)
+          temp -= (c->regs.df ? 0 : 1); 
+      }
+      
+      if (c->exec.reversed) {
+        c->regs.df = (c->regs.b >= (c->regs.d + (c->exec.carry ? (c->regs.df ? 0 : 1) : 0)));
+      } else {
+        c->regs.df = (c->regs.d >= (c->regs.b + (c->exec.carry ? (c->regs.df ? 0 : 1) : 0)));
+      }
+      
+      c->regs.d = temp;
       break;
 
     case AND:
@@ -34,6 +58,34 @@ void cpu_handle_alu(cdp1802a_chip_t* c) {
 
     case XOR:
       c->regs.d ^= c->regs.b;
+
+      break;
+
+    case SHR:
+      lsb = c->regs.d & 0x01;
+      c->regs.d = c->regs.d >> 1;
+      c->regs.df = lsb;
+
+      break;
+      
+    case SHRC:
+      lsb = c->regs.d & 0x01;
+      c->regs.d = (c->regs.d >> 1) | (c->regs.df ? 0x80 : 0x00);
+      c->regs.df = lsb;
+
+      break;
+      
+    case SHL:
+      msb = (c->regs.d & 0x80) >> 7;
+      c->regs.d = c->regs.d << 1;
+      c->regs.df = msb;
+
+      break;
+      
+    case SHLC:
+      msb = (c->regs.d & 0x80) >> 7;
+      c->regs.d = (c->regs.d << 1) | (c->regs.df ? 0x01 : 0x00);
+      c->regs.df = msb;
 
       break;
   }
