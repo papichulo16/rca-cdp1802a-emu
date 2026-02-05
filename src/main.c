@@ -165,20 +165,52 @@ Instruction* findByMnemonic(struct Node* root, const char* mnemonic) {
 
 int main() {
     struct Node* root = NULL;
-	//testing vals
-    //Instruction insts[] = {
-    //    {0x00, "BAL"},
-    //    {0x67, "LSS"},
-    //    {0x69, "HI"},
-    //    {0x17, "RAH"},
-    //    {0x13, "FIH"}
-    //};
-
-    //for (int i = 0; i < 5; i++) {
-	//	root = insert(root, insts[i]);
-	//}
-
+    
+	//Testing vals
+	Instruction insts[] = {
+        {0x00, "IDL"},
+        {0x01, "LDN"},
+        {0x30, "BR"},
+        {0xF8, "LDI"},
+        {0xA0, "PLO"}
+    };
+    
+    for (int i = 0; i < 5; i++) {
+        root = insert(root, insts[i]);
+    }
+    
+    // User input section
+    char input[50];
+    printf("Enter opcode or mnemonic: ");
+    
+    if (scanf("%s", input) != 1) {
+        printf("Error reading input\n");
+        return 1;
+    }
+    
+    // Check if input is a hex opcode
+    if (input[0] == '0' && (input[1] == 'x' || input[1] == 'X')) {
+        // Parse as hexadecimal opcode
+        int opcode;
+        if (sscanf(input, "%x", &opcode) == 1) {
+            Instruction* result = findByOpcode(root, opcode);
+            if (result) {
+                printf("Opcode 0x%02X -> Mnemonic: %s\n", result->opcode, result->mnemonic);
+            } else {
+                printf("Opcode 0x%02X not found\n", opcode);
+            }
+        } else {
+            printf("Invalid opcode format\n");
+        }
+    } else {
+        Instruction* result = findByMnemonic(root, input);
+        if (result) {
+            printf("Mnemonic %s -> Opcode: 0x%02X\n", result->mnemonic, result->opcode);
+        } else {
+            printf("Mnemonic '%s' not found\n", input);
+        }
+    }
+    
     return 0;
 }
-
 	
