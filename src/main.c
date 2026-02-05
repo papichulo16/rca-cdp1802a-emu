@@ -68,6 +68,11 @@ int get_data(Node* node) {
   }
   return node->bit_data;
 }
+int get_OPcode(Node* node) {
+  if( node == NULL) {
+    return -1;}
+return node->op_code;
+}
 
 int get_balance_factor(Node* node) {
   if (node == NULL) {
