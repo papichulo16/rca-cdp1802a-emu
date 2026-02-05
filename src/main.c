@@ -9,6 +9,7 @@ int main(int argc, void** argv) {
 }
 typedef struct Node{
   unsigned int bit_data; // data field//
+  unsigned int* opcode;
   struct Node* left; 
   struct Node* right; //pointer
 } Node;
@@ -24,6 +25,7 @@ int add_to_tree(Node** root, unsigned int bit_data) {
     printf("Memory error\n or issue while reading input");
     return -1; // Memory allocation failed
   }
+  new_node->op_code = op_code;
   new_node->bit_data = bit_data;
   new_node->next = NULL;
 
