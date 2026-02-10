@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
 int main(int argc, char *argv[]) {
 
   // Did user supply a file name?
@@ -55,3 +56,4 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+*/
