@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef TOKENQUEUE_H_
 #define TOKENQUEUE_H_
 

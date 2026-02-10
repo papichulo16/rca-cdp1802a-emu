@@ -4,7 +4,7 @@ FLEX    := flex
 SRC_DIR := src
 BUILD_DIR := build/obj
 INTF_DIR := src/intf
-TARGET := app
+TARGET := rca1802emu
 
 FLEX_SRC := src/cross-asm/scanner.flex
 FLEX_OUT := $(INTF_DIR)/lex.yy.c

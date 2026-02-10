@@ -1,3 +1,5 @@
 build/obj/
-app
 .gdb_history
+
+./app
+./rca1802emu

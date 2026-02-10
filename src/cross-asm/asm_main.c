@@ -6,21 +6,15 @@
 
 #include "lexer.h"
 
+#include "asm.h"
+
 #include <stdio.h>
 #include <string.h>
 
-/*
-int main(int argc, char *argv[]) {
-
-  // Did user supply a file name?
-  if (argv[1] == NULL) {
-    printf("Usage: %s filename.s \n", argv[0]);
-
-    return 1;
-  }
+void asm_main(char* inf) {
 
   // turns out the first arg is the executable name
-  char *fileName = argv[1];
+  char *fileName = inf;
 
   // initialize file
   FILE *srcptr;
@@ -53,7 +47,5 @@ int main(int argc, char *argv[]) {
 
   // close the file
   fclose(srcptr);
-
-  return 0;
 }
-*/
+
