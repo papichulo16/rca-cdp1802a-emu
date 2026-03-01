@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef void(*perif_entry) (void*);
+
 typedef enum {
     PIN_CLOCK,
     PIN_WAIT,
@@ -80,14 +82,35 @@ typedef enum {
   SHL,
   SHR
 
-
 } alu_oper_t;
 
+
+typedef enum {
+
+  SYS_MRD,
+  SYS_MWR,
+  SYS_IOR,
+  SYS_IOW
+
+} ctrl_enum_t;
+
 typedef struct {
-  uint16_t addr;
-  uint8_t data;
-  uint8_t ctrl;
-} sysbus_t;
+
+  perif_entry* entry;
+
+} hw_peripheral_t;
+
+typedef struct {
+
+  uint16_t addr_bus;
+  ctrl_enum_t ctrl_bus;
+  uint8_t data_bus;
+  uint8_t decode_pin_count;
+
+  void* cpu;
+  hw_peripheral_t** peripherals;
+
+} hw_sysbus_t;
 
 typedef struct {
 
@@ -138,6 +161,8 @@ typedef struct {
 
   cpu_state_t state;
   cpu_exec_sm_t exec;
+
+  hw_sysbus_t* sysbus;
   
 } cdp1802a_chip_t;
 

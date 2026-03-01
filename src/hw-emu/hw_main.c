@@ -3,6 +3,9 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "sysbus.h"
+
+#define ADDR_DECODE_PINS 3U
 
 void set_bit(uint64_t* n, uint8_t k) {
     *n = (*n | (1 << k));
@@ -14,7 +17,7 @@ void clr_bit(uint64_t* n, uint8_t k) {
 
 void toggle_clock(cdp1802a_chip_t* chip) {
 
-  // sysbus_handle_event();
+  sysbus_handle_state(chip->sysbus);
   cpu_handle_state(chip);
   
 }
@@ -36,9 +39,16 @@ void hw_pin_bar_init(cdp1802a_chip_t* c) {
 
 }
 
+void hw_sysbus_start(cdp1802a_chip_t* c) {
+
+  c->sysbus = create_sysbus_obj(c, ADDR_DECODE_PINS);
+
+}
+
 void hw_sys_init(cdp1802a_chip_t* chip) {
 
   hw_pin_bar_init(chip);
+  hw_sysbus_start(chip);
 
 }
 

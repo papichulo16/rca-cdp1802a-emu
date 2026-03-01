@@ -53,6 +53,16 @@ void i_reg_2(cdp1802a_chip_t* c) {
 void i_reg_3(cdp1802a_chip_t* c) {
 
   // short branch
+  // right now i havent added conditions so it will always be true
+  bool taken = true;
+
+  if (!taken) 
+    return;
+
+  exec_mem_trans(c, &c->regs.sp_r[c->regs.xp & 0xf], &c->data_bus);
+
+  c->state.mc = MRD;
+  c->addr = c->regs.sp_r[c->regs.xp & 0xf];
 
 }
 
