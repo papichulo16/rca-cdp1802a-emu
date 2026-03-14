@@ -4,31 +4,20 @@
 
 // refactored to be based off of mnemonic instead of opcodes
 // also added an int size since we increment a program counter
-//
+#include "../intf/instruction.h"
+#include "../intf/instr_avl.h"
 
-typedef struct {
-  int opcode;
-  const char *mnemonic;
-  int size;
-} Instruction;
 
-struct instr_node {
-  Instruction instr;
-  struct instr_node *left;
-  struct instr_node *right;
-  int height;
-};
-
-int get_height(struct instr_node *n) {
+static int get_height(struct mnemonic_node *n) {
   if (n == NULL) {
     return 0;
   }
   return n->height;
 }
 
-struct instr_node *create_instr_node(Instruction instr) {
-  struct instr_node *node =
-      (struct instr_node *)malloc(sizeof(struct instr_node));
+struct mnemonic_node *create_mnemonic_node(Instruction instr) {
+  struct mnemonic_node *node =
+      (struct mnemonic_node *)malloc(sizeof(struct mnemonic_node));
   node->instr = instr;
   node->left = NULL;
   node->right = NULL;
@@ -36,7 +25,7 @@ struct instr_node *create_instr_node(Instruction instr) {
   return node;
 }
 
-int max(int a, int b) {
+static int max(int a, int b) {
   if (a > b) {
     return a;
   } else {
@@ -44,7 +33,7 @@ int max(int a, int b) {
   }
 }
 
-int get_balance_factor(struct instr_node *n) {
+static int get_balance_factor(struct mnemonic_node *n) {
   if (n == NULL) {
     return 0;
   }
@@ -52,9 +41,9 @@ int get_balance_factor(struct instr_node *n) {
 }
 
 // Right rotation
-struct instr_node *r_rotate(struct instr_node *y) {
-  struct instr_node *x = y->left;
-  struct instr_node *T2 = x->right;
+static struct mnemonic_node *r_rotate(struct mnemonic_node *y) {
+  struct mnemonic_node *x = y->left;
+  struct mnemonic_node *T2 = x->right;
 
   x->right = y;
   y->left = T2;
@@ -66,9 +55,9 @@ struct instr_node *r_rotate(struct instr_node *y) {
 }
 
 // Left Rotation
-struct instr_node *l_rotate(struct instr_node *x) {
-  struct instr_node *y = x->right;
-  struct instr_node *T2 = y->left;
+static struct mnemonic_node *l_rotate(struct mnemonic_node *x) {
+  struct mnemonic_node *y = x->right;
+  struct mnemonic_node *T2 = y->left;
 
   y->left = x;
   x->right = T2;
@@ -79,17 +68,17 @@ struct instr_node *l_rotate(struct instr_node *x) {
   return y;
 }
 
-struct instr_node *insert(struct instr_node *node, Instruction instr) {
+struct mnemonic_node *mnemonic_insert(struct mnemonic_node *node, Instruction instr) {
   if (node == NULL) {
-    return create_instr_node(instr);
+    return create_mnemonic_node(instr);
   }
 
   int compare = strcmp(instr.mnemonic, node->instr.mnemonic);
 
   if (compare < 0) {
-    node->left = insert(node->left, instr);
+    node->left = mnemonic_insert(node->left, instr);
   } else if (compare > 0) {
-    node->right = insert(node->right, instr);
+    node->right = mnemonic_insert(node->right, instr);
   } else {
     return node;
   }
@@ -122,7 +111,7 @@ struct instr_node *insert(struct instr_node *node, Instruction instr) {
 
 // queue logic has been murdered
 //
-Instruction *avl_find_by_mnemonic(struct instr_node *root,
+Instruction *mnemonic_find(struct mnemonic_node *root,
                                   const char *mnemonic) {
   if (!root)
     return NULL;
@@ -132,16 +121,16 @@ Instruction *avl_find_by_mnemonic(struct instr_node *root,
   if (cmp == 0) {
     return &root->instr;
   } else if (cmp < 0) {
-    return avl_find_by_mnemonic(root->left, mnemonic);
+    return mnemonic_find(root->left, mnemonic);
   } else {
-    return avl_find_by_mnemonic(root->right, mnemonic);
+    return mnemonic_find(root->right, mnemonic);
   }
 }
 
 // ai generated main testing func (lol)
 
 int main() {
-  struct instr_node *root = NULL;
+  struct mnemonic_node *root = NULL;
 
   // 1. Populate the AVL Tree with some RCA 1802 instructions
   // Format is {opcode, mnemonic, size_in_bytes}
@@ -153,7 +142,7 @@ int main() {
 
   int num_insts = sizeof(insts) / sizeof(insts[0]);
   for (int i = 0; i < num_insts; i++) {
-    root = insert(root, insts[i]);
+    root = mnemonic_insert(root, insts[i]);
   }
 
   printf("RCA 1802 Instruction AVL Tree Initialized.\n");
@@ -174,7 +163,7 @@ int main() {
     }
 
     // 3. Test the lookup
-    Instruction *result = avl_find_by_mnemonic(root, input);
+    Instruction *result = mnemonic_find(root, input);
 
     if (result) {
       printf(

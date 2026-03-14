@@ -2,29 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
-  int opcode;
-  const char *mnemonic;
-  int size;
-} Instruction;
+//the split between the two
+#include "../intf/instruction.h"
+#include "../intf/debugger_avl.h"
 
-struct instr_node {
-  Instruction instr;
-  struct instr_node *left;
-  struct instr_node *right;
-  int height;
-};
 
-int get_height(struct instr_node *n) {
+
+static int get_height(struct opcode_node *n) {
   if (n == NULL) {
     return 0;
   }
   return n->height;
 }
 
-struct instr_node *create_instr_node(Instruction instr) {
-  struct instr_node *node =
-      (struct instr_node *)malloc(sizeof(struct instr_node));
+static struct opcode_node *create_instr_node(Instruction instr) {
+  struct opcode_node *node =
+      (struct opcode_node *)malloc(sizeof(struct opcode_node));
   node->instr = instr;
   node->left = NULL;
   node->right = NULL;
@@ -32,7 +25,7 @@ struct instr_node *create_instr_node(Instruction instr) {
   return node;
 }
 
-int max(int a, int b) {
+static int max(int a, int b) {
   if (a > b) {
     return a;
   } else {
@@ -40,7 +33,7 @@ int max(int a, int b) {
   }
 }
 
-int get_balance_factor(struct instr_node *n) {
+static int get_balance_factor(struct opcode_node *n) {
   if (n == NULL) {
     return 0;
   }
@@ -48,9 +41,9 @@ int get_balance_factor(struct instr_node *n) {
 }
 
 // Right rotation
-struct instr_node *r_rotate(struct instr_node *y) {
-  struct instr_node *x = y->left;
-  struct instr_node *T2 = x->right;
+static struct opcode_node *r_rotate(struct opcode_node *y) {
+  struct opcode_node *x = y->left;
+  struct opcode_node *T2 = x->right;
 
   x->right = y;
   y->left = T2;
@@ -62,9 +55,9 @@ struct instr_node *r_rotate(struct instr_node *y) {
 }
 
 // Left Rotation
-struct instr_node *l_rotate(struct instr_node *x) {
-  struct instr_node *y = x->right;
-  struct instr_node *T2 = y->left;
+static struct opcode_node *l_rotate(struct opcode_node *x) {
+  struct opcode_node *y = x->right;
+  struct opcode_node *T2 = y->left;
 
   y->left = x;
   x->right = T2;
@@ -75,15 +68,15 @@ struct instr_node *l_rotate(struct instr_node *x) {
   return y;
 }
 
-struct instr_node *insert(struct instr_node *node, Instruction instr) {
+struct opcode_node *opcode_insert(struct opcode_node *node, Instruction instr) {
   if (node == NULL) {
     return create_instr_node(instr);
   }
 
   if (instr.opcode < node->instr.opcode) {
-    node->left = insert(node->left, instr);
+    node->left = opcode_insert(node->left, instr);
   } else if (instr.opcode > node->instr.opcode) {
-    node->right = insert(node->right, instr);
+    node->right = opcode_insert(node->right, instr);
   } else {
     return node;
   }
@@ -114,33 +107,33 @@ struct instr_node *insert(struct instr_node *node, Instruction instr) {
   return node;
 }
 
-Instruction *avl_find_by_opcode(struct instr_node *root, int opcode) {
+Instruction *opcode_find_by_opcode(struct opcode_node *root, int opcode) {
   if (!root) {
     return NULL;
   }
   if (opcode == root->instr.opcode) {
     return &root->instr;
   } else if (opcode < root->instr.opcode) {
-    return avl_find_by_opcode(root->left, opcode);
+    return opcode_find_by_opcode(root->left, opcode);
   } else {
-    return avl_find_by_opcode(root->right, opcode);
+    return opcode_find_by_opcode(root->right, opcode);
   }
 }
 
-Instruction *avl_find_by_mnemonic(struct instr_node *root,
+Instruction *opcode_find_by_mnemonic(struct opcode_node *root,
                                   const char *mnemonic) {
   if (!root) {
     return NULL;
   }
 
-  struct instr_node *queue[256];
+  struct opcode_node *queue[256];
   int front = 0;
   int back = 0;
 
   queue[back++] = root;
 
   while (front < back) {
-    struct instr_node *curr = queue[front++];
+    struct opcode_node *curr = queue[front++];
 
     if (strcmp(curr->instr.mnemonic, mnemonic) == 0) {
       return &curr->instr;
@@ -157,7 +150,7 @@ Instruction *avl_find_by_mnemonic(struct instr_node *root,
   return NULL;
 }
 
-// void inOrder(struct instr_node* root) {
+// void inOrder(struct opcode_node* root) {
 //	if (root != NULL) {
 //		inOrder(root->left);
 //		printf("%d ", root->key);
@@ -167,7 +160,7 @@ Instruction *avl_find_by_mnemonic(struct instr_node *root,
 
 /*
 int main() {
-    struct instr_node* root = NULL;
+    struct opcode_node* root = NULL;
 
         //Testing vals
         Instruction insts[] = {
@@ -179,7 +172,7 @@ int main() {
     };
 
     for (int i = 0; i < 5; i++) {
-        root = insert(root, insts[i]);
+        root = opcode_insert(root, insts[i]);
     }
 
     // User input section
@@ -196,7 +189,7 @@ int main() {
         // Parse as hexadecimal opcode
         int opcode;
         if (sscanf(input, "%x", &opcode) == 1) {
-            Instruction* result = avl_find_by_opcode(root, opcode);
+            Instruction* result = opcode_find_by_opcode(root, opcode);
             if (result) {
                 printf("Opcode 0x%02X -> Mnemonic: %s\n", result->opcode,
 result->mnemonic); } else { printf("Opcode 0x%02X not found\n", opcode);
@@ -205,7 +198,7 @@ result->mnemonic); } else { printf("Opcode 0x%02X not found\n", opcode);
             printf("Invalid opcode format\n");
         }
     } else {
-        Instruction* result = avl_find_by_mnemonic(root, input);
+        Instruction* result = opcode_find_by_mnemonic(root, input);
         if (result) {
             printf("Mnemonic %s -> Opcode: 0x%02X\n", result->mnemonic,
 result->opcode); } else { printf("Mnemonic '%s' not found\n", input);
