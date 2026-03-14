@@ -164,11 +164,18 @@ typedef struct {
 
   hw_sysbus_t* sysbus;
   
+  void* next;
 } cdp1802a_chip_t;
+
+typedef struct {
+
+  cdp1802a_chip_t* head;
+
+} hw_sys_t;
 
 void set_bit(uint64_t* n, uint8_t k);
 void clr_bit(uint64_t* n, uint8_t k);
 
-void hw_sys_init(cdp1802a_chip_t* chip);
-void hw_sys_run(cdp1802a_chip_t* chip);
+void hw_sys_init(hw_sys_t* chip);
+void hw_sys_run(hw_sys_t* chip);
 

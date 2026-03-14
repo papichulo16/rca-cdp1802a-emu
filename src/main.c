@@ -22,12 +22,12 @@ void assembler() {
 
 void emulator(){
 
-  cdp1802a_chip_t* chip = malloc(sizeof(cdp1802a_chip_t));
+  hw_sys_t* sys = malloc(sizeof(hw_sys_t));
 
-  hw_sys_init(chip);
-  hw_sys_run(chip);
+  hw_sys_init(sys);
+  hw_sys_run(sys);
 
-  free(chip);
+  free(sys);
 
 }
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "hw.h"
@@ -45,20 +46,55 @@ void hw_sysbus_start(cdp1802a_chip_t* c) {
 
 }
 
-void hw_sys_init(cdp1802a_chip_t* chip) {
+void hw_cpu_init(cdp1802a_chip_t* chip) {
 
   hw_pin_bar_init(chip);
   hw_sysbus_start(chip);
+  chip->next = NULL;
 
 }
 
-void hw_sys_run(cdp1802a_chip_t* chip) {
+// based on YAML given, initialize system
+void hw_sys_init(hw_sys_t* sys) {
+
+  // temporary, hardcoded cpu
+  // TODO: YAML parsing
+  cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
+  hw_cpu_init(c);
+
+  sys->head = c;
+}
+
+void hw_sys_cleanup(hw_sys_t* sys) {
+
+  cdp1802a_chip_t* c = sys->head;
+  cdp1802a_chip_t* tmp;
+
+  while (c != NULL) {
+    sysbus_cleanup(c->sysbus);
+    free(c->sysbus);
+
+    tmp = c->next;
+    free(c);
+    c = tmp;
+  }
+
+  sys->head = NULL;
+}
+
+void hw_sys_run(hw_sys_t* sys) {
 
   while(1) {
 
-    toggle_clock(chip);
+    cdp1802a_chip_t* chip = sys->head;
 
-    sleep(1);
+    while (chip != NULL) {
+      toggle_clock(chip);
+
+      chip = chip->next;
+    }
+
+    sleep(0.1);
   }
 
 }
