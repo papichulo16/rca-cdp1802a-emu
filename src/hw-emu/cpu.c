@@ -63,7 +63,7 @@ void mem_read(cdp1802a_chip_t* c) {
 
     case 1:
       cpu_w_ma_pins(c, (uint8_t) (c->addr & (0xff << 8)));
-      clr_bit(&c->pinout, PIN_TPA);
+      set_bit(&c->pinout, PIN_TPA);
 
       break;
 
