@@ -22,11 +22,19 @@ REGISTER    [rR]({DIGIT}|1[0-5]|[a-fA-F])
 
 %%
 
-[ \t]+      { /* skip spaces lol */}
-{REGISTER}  { emit_token(yyscanner, TOKEN_REGISTER); }
-[A-Za-z]{3} { emit_token(yyscanner, TOKEN_MNEMONIC); }
-(\n)        { emit_token(yyscanner, TOKEN_EOL); } 
-.           { emit_token(yyscanner, TOKEN_UNKNOWN); }
+[ \t\r]+                      { /* skip spaces lol */}
+;.*                           { emit_token(yyscanner, TOKEN_COMMENT); }
+{REGISTER}                    { emit_token(yyscanner, TOKEN_REGISTER); }
+{LETTER}({LETTER}|{DIGIT})*:  { emit_token(yyscanner, TOKEN_LABEL); }
+{LETTER}({LETTER}|{DIGIT})*   { emit_token(yyscanner, TOKEN_MNEMONIC); }
+0[xX]{HEX}+                   { emit_token(yyscanner, TOKEN_NUMBER); }
+\${HEX}+                      { emit_token(yyscanner, TOKEN_NUMBER); }
+{HEX}+[hH]                    { emit_token(yyscanner, TOKEN_NUMBER); }
+{DIGIT}+                      { emit_token(yyscanner, TOKEN_NUMBER); }
+(,)                           { emit_token(yyscanner, TOKEN_COMMA); } 
+(\n)                          { emit_token(yyscanner, TOKEN_EOL); }
+<<EOF>>                       { emit_token(yyscanner, TOKEN_EOF); yyterminate(); } 
+.                             { emit_token(yyscanner, TOKEN_UNKNOWN); }
 
 %%
 
@@ -44,12 +52,23 @@ void emit_token(yyscan_t scanner, TokenType type){
 
   //result.text=text;
 
-  /*
+  //number handling because apparently I forgot to do this
+  //strtol does this well but also need to cast to int since it outputs a long
   if(type == TOKEN_NUMBER){
-    //do funny number conversion stuff here and modify number field
-
+    if (text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+        //0x...
+        result.value = (int)strtol(text, NULL, 16);
+    } else if (text[0] == '$') {
+        //$...
+        result.value = (int)strtol(text + 1, NULL, 16);
+    } else if (text[strlen(text)-1] == 'h' || text[strlen(text)-1] == 'H') {
+        //...h
+        result.value = (int)strtol(text, NULL, 16);
+    } else {
+        //just a regular decimal number
+        result.value = (int)strtol(text, NULL, 10);
+    }
   }
-  */
 
   enqueue(qu, result);
   //debug
