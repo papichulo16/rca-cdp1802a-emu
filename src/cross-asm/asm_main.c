@@ -1,12 +1,12 @@
-#include "token.h"
+#include "../intf/token.h"
 
-#include "tokenQueue.h"
+#include "../intf/tokenQueue.h"
 // specific
 #include "scanner.h"
 
-#include "lexer.h"
+#include "../intf/lexer.h"
 
-#include "asm.h"
+#include "../intf/asm.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -49,3 +49,11 @@ void asm_main(char* inf) {
   fclose(srcptr);
 }
 
+
+/*
+int main(int argc, char** argv){
+    asm_main(argv[1]);
+    return 0;
+
+}
+*/

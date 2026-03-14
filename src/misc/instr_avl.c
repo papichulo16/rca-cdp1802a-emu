@@ -128,7 +128,7 @@ Instruction *mnemonic_find(struct mnemonic_node *root,
 }
 
 // ai generated main testing func (lol)
-
+/*
 int main() {
   struct mnemonic_node *root = NULL;
 
@@ -181,3 +181,5 @@ int main() {
 
   return 0;
 }
+
+*/

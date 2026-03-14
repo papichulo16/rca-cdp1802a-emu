@@ -1,9 +1,9 @@
 
-#include "token.h"
+#include "../intf/token.h"
 
-#include "tokenQueue.h"
+#include "../intf/tokenQueue.h"
 
-#include "lexer.h"
+#include "../intf/lexer.h"
 
 #include "scanner.h"
 

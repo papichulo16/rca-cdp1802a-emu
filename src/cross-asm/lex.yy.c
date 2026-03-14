@@ -427,8 +427,8 @@ static const flex_int16_t yy_chk[32] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "scanner.flex"
 #line 2 "scanner.flex"
-#include "token.h"
-#include "tokenQueue.h"
+#include "../intf/token.h"
+#include "../intf/tokenQueue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

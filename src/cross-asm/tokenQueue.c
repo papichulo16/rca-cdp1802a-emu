@@ -1,5 +1,5 @@
-#include "tokenQueue.h"
-#include "token.h"
+#include "../intf/tokenQueue.h"
+#include "../intf/token.h"
 #include <stdio.h>
 #include <stdlib.h>
 

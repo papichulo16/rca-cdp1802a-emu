@@ -1,6 +1,6 @@
 %{
-#include "token.h"
-#include "tokenQueue.h"
+#include "../intf/token.h"
+#include "../intf/tokenQueue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
