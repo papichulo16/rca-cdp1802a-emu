@@ -63,4 +63,6 @@ void tokenize(FILE *srcptr, queue *result) {
     Token currToken = dequeue(result);
     printf("%s : %s\n", get_token_name(currToken.type), currToken.text);
   }
+
+
 }
