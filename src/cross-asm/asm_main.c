@@ -8,7 +8,7 @@
 
 #include "../intf/asm.h"
 
-#include "../intf/assemble.h"
+#include "../intf/assem.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -49,7 +49,7 @@ void asm_main(char* inf) {
 
 
   //where the actual magic happens
-  assemble(funnyTokens);
+  assem(funnyTokens);
 
 
 
@@ -57,9 +57,10 @@ void asm_main(char* inf) {
   fclose(srcptr);
 }
 
-
+/*
 int main(int argc, char** argv){
     asm_main(argv[1]);
     return 0;
 
 }
+*/

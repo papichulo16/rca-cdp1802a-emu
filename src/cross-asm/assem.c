@@ -4,14 +4,14 @@
 
 // #include "../intf/lexer.h"
 
-#include "../intf/assemble.h"
+#include "../intf/assem.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 
 
-void assemble(queue *tokens){
+void assem(queue *tokens){
   // We should have a queue full of tokens
   //  But if not, this will tell us (until its removed)
   if (isEmpty(tokens)) {
@@ -23,5 +23,6 @@ void assemble(queue *tokens){
 
   printf("Did absolutely nothing yet but I am making it look like I did something\n");
 
+  return;
 
 }
