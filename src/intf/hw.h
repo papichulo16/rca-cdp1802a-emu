@@ -87,6 +87,7 @@ typedef enum {
 
 typedef enum {
 
+  SYS_NONE,
   SYS_MRD,
   SYS_MWR,
   SYS_IOR,

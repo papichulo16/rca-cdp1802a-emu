@@ -6,6 +6,7 @@
 
 #include "hw.h"
 #include "asm.h"
+#include "utils.h"
 
 char* binary;
 char* outf = "a.out";
@@ -22,11 +23,15 @@ void assembler() {
 
 void emulator(){
 
+  printf("Starting emulator...\n");
   hw_sys_t* sys = malloc(sizeof(hw_sys_t));
 
   hw_sys_init(conf, sys);
+  printf("System config initialized, running emulator...\n\n");
+
   hw_sys_run(sys);
 
+  printf("Exiting...\n\n");
   hw_sys_cleanup(sys);
   free(sys);
 

@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "sysbus.h"
 #include "perif.h"
+#include "dbg.h"
 #include "utils.h"
 
 #define ADDR_DECODE_PINS 3U
@@ -65,10 +66,12 @@ void hw_sys_init(char* conf, hw_sys_t* sys) {
 
   int fd = open(conf, O_RDONLY);
   struct stat st;
-  uint8_t buf[0x1000];
-  int sz = MIN(sizeof(buf), st.st_size);
+  uint8_t buf[0x800];
 
   fstat(fd, &st);
+
+  int sz = MIN(sizeof(buf), st.st_size);
+
   read(fd, buf, sz);
   close(fd);
 
@@ -100,13 +103,16 @@ void hw_sys_run(hw_sys_t* sys) {
 
     cdp1802a_chip_t* chip = sys->head;
 
+    if (chip->state.mc == RDY)
+      dbg_ask(sys->head);
+
     while (chip != NULL) {
+
       toggle_clock(chip);
 
       chip = chip->next;
     }
 
-    sleep(0.1);
   }
 
 }

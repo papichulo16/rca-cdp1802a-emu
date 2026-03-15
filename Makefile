@@ -1,5 +1,5 @@
 CC      := gcc
-CFLAGS  := -Wall -Wextra -O2 -Isrc/intf
+CFLAGS  := -Wall -Wextra -O2 -Isrc/intf -g
 FLEX    := flex
 SRC_DIR := src
 BUILD_DIR := build/obj

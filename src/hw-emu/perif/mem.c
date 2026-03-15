@@ -99,6 +99,7 @@ void perif_mem_entry(hw_sysbus_t* sysb, int id) {
 
   uint16_t off = sysb->addr_bus & mem->max;
 
+
   switch (sysb->ctrl_bus) {
     case SYS_MRD:
 

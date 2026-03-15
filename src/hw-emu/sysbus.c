@@ -13,12 +13,12 @@ void sysbus_handle_data_bus(hw_sysbus_t* s, cdp1802a_chip_t* c) {
 
 void sysbus_handle_addr_bus(hw_sysbus_t* s, cdp1802a_chip_t* c) {
 
-  if (!(c->pinout & (1ULL << PIN_TPA))) {
+  if ((c->pinout & (1ULL << PIN_TPA))) {
     s->addr_bus &= 0xff;
     s->addr_bus |= ((c->pinout & (0xff << PIN_MA0)) >> PIN_MA0) << 8;
   }
 
-  if (!(c->pinout & (1ULL << PIN_TPB))) {
+  if ((c->pinout & (1ULL << PIN_TPB))) {
     s->addr_bus &= 0xff00;
     s->addr_bus |= ((c->pinout & (0xff << PIN_MA0)) >> PIN_MA0);
   }
@@ -27,10 +27,14 @@ void sysbus_handle_addr_bus(hw_sysbus_t* s, cdp1802a_chip_t* c) {
 
 void sysbus_handle_ctrl_bus(hw_sysbus_t* s, cdp1802a_chip_t* c) {
 
-  if (!(c->pinout & (1ULL << PIN_MRD))) 
-    s->ctrl_bus = SYS_MRD;
+  s->ctrl_bus = SYS_NONE;
 
-  if (!(c->pinout & (1ULL << PIN_MWR))) 
+  if (!((c->pinout & (1ULL << PIN_MRD)) >> PIN_MRD)) {
+
+    s->ctrl_bus = SYS_MRD;
+  }
+
+  if (!((c->pinout & (1ULL << PIN_MWR))>> PIN_MWR)) 
     s->ctrl_bus = SYS_MWR;
 
 }
@@ -110,10 +114,21 @@ void sysbus_chip_select(hw_sysbus_t* sysb) {
 
 }
 
+void sysbus_update_chip_bus(hw_sysbus_t* sysb) {
+  cdp1802a_chip_t* c = sysb->cpu;
+
+  c->pinout &= ~(0xffULL << PIN_BUS0);
+  c->pinout |= sysb->data_bus << PIN_BUS0;
+}
+
+int count = 0;
+
 void sysbus_handle_state(hw_sysbus_t* sysb) {
 
   sysbus_update(sysb);
   sysbus_chip_select(sysb);
+  sysbus_update_chip_bus(sysb);
 
+  count++;
 }
 
