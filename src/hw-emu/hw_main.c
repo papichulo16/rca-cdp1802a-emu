@@ -1,20 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "hw.h"
 #include "cpu.h"
 #include "sysbus.h"
+#include "perif.h"
+#include "utils.h"
 
 #define ADDR_DECODE_PINS 3U
-
-void set_bit(uint64_t* n, uint8_t k) {
-    *n = (*n | (1 << k));
-}
-
-void clr_bit(uint64_t* n, uint8_t k) {
-    *n = (*n & (~(1 << k)));
-}
 
 void toggle_clock(cdp1802a_chip_t* chip) {
 
@@ -55,7 +51,7 @@ void hw_cpu_init(cdp1802a_chip_t* chip) {
 }
 
 // based on YAML given, initialize system
-void hw_sys_init(hw_sys_t* sys) {
+void hw_sys_init(char* conf, hw_sys_t* sys) {
 
   // temporary, hardcoded cpu
   // TODO: YAML parsing
@@ -63,6 +59,21 @@ void hw_sys_init(hw_sys_t* sys) {
   hw_cpu_init(c);
 
   sys->head = c;
+
+  // temporary, hardcoded memory
+  int id = perif_mem_init(c->sysbus, 0, 10);
+
+  int fd = open(conf, O_RDONLY);
+  struct stat st;
+  uint8_t buf[0x1000];
+  int sz = MIN(sizeof(buf), st.st_size);
+
+  fstat(fd, &st);
+  read(fd, buf, sz);
+  close(fd);
+
+  perif_mem_memcpy(id, buf, sz);
+
 }
 
 void hw_sys_cleanup(hw_sys_t* sys) {
@@ -70,7 +81,8 @@ void hw_sys_cleanup(hw_sys_t* sys) {
   cdp1802a_chip_t* c = sys->head;
   cdp1802a_chip_t* tmp;
 
-  while (c != NULL) {
+  while (c) {
+    perif_mem_cleanup();
     sysbus_cleanup(c->sysbus);
     free(c->sysbus);
 

@@ -7,7 +7,7 @@ This is a clock-cycle accurate hardware emulator and cross-assembler for the leg
 
 Utilizing an independent CPU and system bus design, this emulator is able to do systems of systems tasks (as long as it is multiple RCA 1802 chips communicating with each other since that is the only MPU implemented lol).
 
-This project was mainly made for educational purposes since it forced us to strictly adhere to a datasheet and follow along its design, write a modularized system design (or whatever that means, i just wanted to say it uses a lot of state machines but dont know how to put it), and use tools like flex and bison.
+This project was mainly made for educational purposes since it forced us to strictly adhere to a datasheet and follow along to its architecture, write an independent and modularized design for having systems of systems, and use tools like flex and bison.
 
 ### building - UNIX/Linux
 

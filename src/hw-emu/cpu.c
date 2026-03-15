@@ -3,6 +3,7 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "utils.h"
 
 void cpu_w_bus_pins(cdp1802a_chip_t* c, uint8_t v) {
 

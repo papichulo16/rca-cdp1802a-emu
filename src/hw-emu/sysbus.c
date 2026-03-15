@@ -2,17 +2,7 @@
 #include <stdlib.h>
 
 #include "sysbus.h"
-
-int power(int a, int b) {
-
-  int ret = 1;
-
-  for (int i = 0; i < b; i++)
-    ret *= a;
-
-  return ret;
-  
-}
+#include "utils.h"
 
 void sysbus_handle_data_bus(hw_sysbus_t* s, cdp1802a_chip_t* c) {
 
@@ -83,19 +73,20 @@ int sysbus_cs_perif_idx_get(hw_sysbus_t* sysb) {
   return sysbus_perif_idx_get(sysb, sysb->addr_bus);
 }
 
-void sysbus_perif_init(hw_sysbus_t* sysb, uint16_t addr, perif_entry* entry) {
+void sysbus_perif_init(hw_sysbus_t* sysb, uint16_t addr, perif_entry* entry, int id) {
 
   int idx = sysbus_perif_idx_get(sysb, addr);
 
   if (sysb->peripherals[idx] != NULL) {
-    perror("[sysbus.c] ERROR: PERIPHERAL INITIALIZE CHIP SELECT LINE IS INUSE\n");
+    printf("[sysbus.c] ERROR: PERIPHERAL INITIALIZE CHIP SELECT LINE IS IN USE\n");
 
-    return;
+    exit(-1);
   }
 
   hw_peripheral_t* perif = malloc(sizeof(hw_peripheral_t));
   
   perif->entry = entry;
+  perif->id = id;
 
   sysb->peripherals[idx] = perif;
 
@@ -110,12 +101,12 @@ void sysbus_chip_select(hw_sysbus_t* sysb) {
     return;
 
   if (perif->entry == NULL) {
-    perror("[sysbus.c] ERROR: PERIPHARAL IS INITIALIZED BUT NO ENTRY\n");
+    printf("[sysbus.c] ERROR: PERIPHARAL IS INITIALIZED BUT NO ENTRY\n");
 
-    return;
+    exit(-1);
   }
 
-  ((perif_entry) perif->entry)(sysb);
+  ((perif_entry) perif->entry)(sysb, perif->id);
 
 }
 
