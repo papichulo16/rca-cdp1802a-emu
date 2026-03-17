@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libcyaml
+Description: Schema-based YAML parsing and serialisation
+Version: 2.0.0
+Libs: -L${libdir} -lcyaml -lyaml
+Cflags: -I${includedir}
