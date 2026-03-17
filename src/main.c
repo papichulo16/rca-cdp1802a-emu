@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "hw.h"
+#include "dbg.h"
 #include "asm.h"
 #include "utils.h"
 
@@ -25,14 +26,15 @@ void emulator(){
 
   printf("Starting emulator...\n");
   hw_sys_t* sys = malloc(sizeof(hw_sys_t));
-
   hw_sys_init(conf, sys);
-  printf("System config initialized, running emulator...\n\n");
+  dbg_cmds_init();
 
+  printf("System config initialized, running emulator...\n\n");
   hw_sys_run(sys);
 
   printf("Exiting...\n\n");
   hw_sys_cleanup(sys);
+  dbg_cmds_clean();
   free(sys);
 
 }
