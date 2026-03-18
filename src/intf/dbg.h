@@ -24,6 +24,7 @@ void dbg_cmds_init();
 void dbg_cmds_clean();
 dbg_state_enum dbg_ask(cdp1802a_chip_t* c);
 
+dbg_state_enum dbg_cpu(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_write_mem_setb(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_read_mem_printb(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_read_mem_printw(cdp1802a_chip_t* c, char* args);

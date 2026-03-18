@@ -45,6 +45,7 @@ void hw_sysbus_start(cdp1802a_chip_t* c) {
 
 void hw_cpu_init(cdp1802a_chip_t* chip) {
 
+  chip->state.mc = RDY;
   hw_pin_bar_init(chip);
   hw_sysbus_start(chip);
   chip->next = NULL;
@@ -62,7 +63,7 @@ void hw_sys_init(char* conf, hw_sys_t* sys) {
   sys->head = c;
 
   // temporary, hardcoded memory
-  int id = perif_mem_init(c->sysbus, 0, 10);
+  int id = perif_mem_init(c->sysbus, 0, 13);
 
   int fd = open(conf, O_RDONLY);
   struct stat st;
