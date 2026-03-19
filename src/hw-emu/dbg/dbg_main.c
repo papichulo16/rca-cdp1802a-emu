@@ -28,9 +28,100 @@ dbg_state_enum dbg_clear(cdp1802a_chip_t* c, char* args) {
 
   clear_screen();
 
-  return STATE_CONT;
+  return STATE_DBG;
 }
 
+dbg_state_enum dbg_help(cdp1802a_chip_t* c, char* args) {
+  set_red();
+
+  printf("List of cmds: ");
+
+  dbg_cmd_t* cur = cmds_head;
+
+  while (cur) {
+    printf("%s, ", cur->cmd);
+    cur = cur->next;
+  }
+
+  printf("\b\b \b\n");
+
+  reset_color();
+
+  return STATE_DBG;
+}
+
+dbg_state_enum dbg_bp(cdp1802a_chip_t* c, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: bp <set/dis> <addr>\n");
+    reset_color();
+
+    goto end;
+  }
+
+  char* space = strchr(args, ' ');
+
+  if (!space) {
+
+    set_red();
+    printf("Usage: bp <set/dis> <addr>\n");
+    reset_color();
+
+    goto end;
+  }
+
+  *space++ = '\0';
+
+  uint16_t addr = strtol(space, NULL, 16); 
+  dbg_bp_t* d;
+  
+  if (!strcmp(args, "set")) {
+    d = malloc(sizeof(dbg_bp_t));
+
+    d->addr = addr;
+    d->next = c->bps;
+    c->bps = d;
+
+    goto end;
+  }
+ 
+  if (!strcmp(args, "dis")) {
+    d = c->bps;
+
+    if (((dbg_bp_t *) c->bps)->addr == addr) {
+      c->bps = ((dbg_bp_t *) c->bps)->next;
+
+      free(d);
+      goto end;
+    }
+
+    dbg_bp_t* cur = ((dbg_bp_t *) c->bps)->next;
+
+    while (cur) {
+      if (cur->addr == addr) {
+
+        d->next = cur->next;
+        free(cur);
+
+        goto end;
+      }
+
+      d = cur;
+      cur = cur->next;
+    }
+
+    goto end;
+  }
+
+  set_red();
+  printf("Usage: bp <set/dis> <addr>\n");
+  reset_color();
+
+end:
+  return STATE_DBG; 
+}
 
 void dbg_add_cmd(char* cmd, void* entry) {
 
@@ -45,7 +136,9 @@ void dbg_add_cmd(char* cmd, void* entry) {
 
 void dbg_cmds_init() {
 
+  dbg_add_cmd("help", dbg_help);
   dbg_add_cmd("quit", dbg_quit);
+  dbg_add_cmd("bp", dbg_bp);
   dbg_add_cmd("step", dbg_step);
   dbg_add_cmd("cont", dbg_cont);
   dbg_add_cmd("clear", dbg_clear);
@@ -53,6 +146,7 @@ void dbg_cmds_init() {
   dbg_add_cmd("setb", dbg_write_mem_setb);
   dbg_add_cmd("readb", dbg_read_mem_printb);
   dbg_add_cmd("readw", dbg_read_mem_printw);
+  dbg_add_cmd("readi", dbg_read_mem_instr);
 
   dbg_add_cmd("cpu", dbg_cpu);
 }
@@ -90,8 +184,7 @@ dbg_state_enum dbg_cmd_dispatch(cdp1802a_chip_t* c, char* cmd) {
 
   if (space) {
 
-    *space = '\0';
-    space++;
+    *space++ = '\0';
   }
 
   dbg_cmd_t* cur = cmds_head;
@@ -113,12 +206,53 @@ dbg_state_enum dbg_cmd_dispatch(cdp1802a_chip_t* c, char* cmd) {
   return STATE_DBG;
 }
 
+uint16_t last_pc = 0xffff;
+
+void print_cur_state(cdp1802a_chip_t* c, uint16_t pc) {
+
+  char buf[16];
+
+  snprintf(buf, sizeof(buf), "%x 5", pc);
+
+  set_yellow();
+  printf("IN STOPPED STATE, CUR CPU PC (R%d): ", c->regs.xp & 0xf);
+  set_white();
+  printf("0x%x\n\n", pc);
+  reset_color();
+  dbg_read_mem_instr(c, buf);
+
+}
+
+void check_breakpoints(cdp1802a_chip_t* c, uint16_t pc) {
+
+  dbg_bp_t* cur = (dbg_bp_t *) c->bps;
+
+  while (cur) {
+    if (pc == cur->addr) {
+      stop = 1;
+
+      return;
+    }
+
+    cur = cur->next;
+  }
+}
+
 dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
 
   // TODO: code to check for breakpoint
+  uint16_t pc = c->regs.sp_r[c->regs.xp & 0xf];
+
+  check_breakpoints(c, pc);
   
   if (!stop)
     return STATE_CONT;
+
+  if (pc != last_pc) {
+
+    print_cur_state(c, pc);
+    last_pc = pc;
+  }
 
   char cmd[MAX_CMD_SZ];
   memset(cmd, '\0', MAX_CMD_SZ);

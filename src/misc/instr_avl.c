@@ -1,18 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
-typedef struct {
-	int opcode;
-	const char *mnemonic;
-} Instruction;
-
-struct instr_node {
-	Instruction instr;
-	struct instr_node* left;
-	struct instr_node* right;
-	int height;
-};
+#include "instr_tree.h"
 
 int get_height(struct instr_node* n) {
 	if (n == NULL) {
@@ -21,7 +12,7 @@ int get_height(struct instr_node* n) {
 	return n->height;
 }
 
-struct instr_node* create_instr_node(Instruction instr) {
+struct instr_node* create_instr_node(Instruction* instr) {
 	struct instr_node* node = (struct instr_node*)malloc(sizeof(struct instr_node));
 	node->instr = instr;
 	node->left = NULL;
@@ -74,14 +65,14 @@ struct instr_node* l_rotate(struct instr_node* x) {
 	return y;
 }
 
-struct instr_node* insert(struct instr_node* node, Instruction instr) {
+struct instr_node* insert(struct instr_node* node, Instruction* instr) {
     if (node == NULL) {
         return create_instr_node(instr);
     }
 
-    if (instr.opcode < node->instr.opcode) {
+    if (instr->opcode < node->instr->opcode) {
         node->left = insert(node->left, instr);
-    } else if (instr.opcode > node->instr.opcode) {
+    } else if (instr->opcode > node->instr->opcode) {
         node->right = insert(node->right, instr);
     } else {
         return node;
@@ -91,21 +82,21 @@ struct instr_node* insert(struct instr_node* node, Instruction instr) {
     int balance = get_balance_factor(node);
 
     // Left Left
-    if (balance > 1 && instr.opcode < node->left->instr.opcode)
+    if (balance > 1 && instr->opcode < node->left->instr->opcode)
         return r_rotate(node);
 
     // Right Right
-    if (balance < -1 && instr.opcode > node->right->instr.opcode)
+    if (balance < -1 && instr->opcode > node->right->instr->opcode)
         return l_rotate(node);
 
     // Left Right
-    if (balance > 1 && instr.opcode > node->left->instr.opcode) {
+    if (balance > 1 && instr->opcode > node->left->instr->opcode) {
         node->left = l_rotate(node->left);
         return r_rotate(node);
     }
 
     // Right Left
-    if (balance < -1 && instr.opcode < node->right->instr.opcode) {
+    if (balance < -1 && instr->opcode < node->right->instr->opcode) {
         node->right = r_rotate(node->right);
         return l_rotate(node);
     }
@@ -117,9 +108,9 @@ Instruction* avl_find_by_opcode(struct instr_node* root, int opcode) {
 	if (!root) {
 		return NULL;
 	}
-	if (opcode == root->instr.opcode) {
-		return &root->instr;
-	} else if (opcode < root->instr.opcode) {
+	if (opcode == root->instr->opcode) {
+		return root->instr;
+	} else if (opcode < root->instr->opcode) {
 		return avl_find_by_opcode(root->left, opcode);
 	} else {
 		return avl_find_by_opcode(root->right, opcode);
@@ -140,8 +131,8 @@ Instruction* avl_find_by_mnemonic(struct instr_node* root, const char* mnemonic)
 	while (front < back) {
 		struct instr_node* curr = queue[front++];
 
-		if (strcmp(curr->instr.mnemonic, mnemonic) == 0) {
-			return &curr->instr;
+		if (strcmp(curr->instr->mnemonic, mnemonic) == 0) {
+			return curr->instr;
 		}
 
 		if (curr->left) {
@@ -154,6 +145,121 @@ Instruction* avl_find_by_mnemonic(struct instr_node* root, const char* mnemonic)
 	}
 	return NULL;
 }
+
+struct instr_node* instr_tree_root = NULL;
+
+void instr_tree_add_node(int op, char* mnem, int bytes) {
+  char* name = malloc(strlen(mnem) + 1);
+  strcpy(name, mnem);
+
+  Instruction* i = malloc(sizeof(Instruction));
+
+  i->opcode = op;
+  i->mnemonic = name;
+  i->bytes = bytes;
+
+  instr_tree_root = insert(instr_tree_root, i);
+}
+
+Instruction* instr_tree_find_by_op(int op) {
+  return avl_find_by_opcode(instr_tree_root, op);
+}
+
+void instr_tree_init() {
+
+  char buf[16];
+
+  for (uint8_t i = 0; i < 16; i++) {
+
+    memset(buf, '\0', sizeof(buf));
+
+    if (i % 16 != 0) {
+      snprintf(buf, sizeof(buf), "LDN R%d", i);
+      instr_tree_add_node(i, buf, 1);
+    }
+
+    snprintf(buf, sizeof(buf), "INC R%d", i);
+    instr_tree_add_node(0x10 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "DEC R%d", i);
+    instr_tree_add_node(0x20 + i, buf, 1);
+
+    instr_tree_add_node(0x30 + i, "B", 2);
+
+    snprintf(buf, sizeof(buf), "LDA R%d", i);
+    instr_tree_add_node(0x40 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "STR R%d", i);
+    instr_tree_add_node(0x50 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "GLO R%d", i);
+    instr_tree_add_node(0x80 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "GHI R%d", i);
+    instr_tree_add_node(0x90 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "PLO R%d", i);
+    instr_tree_add_node(0xa0 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "PHI R%d", i);
+    instr_tree_add_node(0xb0 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "SEP R%d", i);
+    instr_tree_add_node(0xd0 + i, buf, 1);
+
+    snprintf(buf, sizeof(buf), "SEX R%d", i);
+    instr_tree_add_node(0xe0 + i, buf, 1);
+
+  }
+
+  instr_tree_add_node(0, "IDL", 1);
+
+  instr_tree_add_node(0x60, "IRX", 1);
+
+  for (uint8_t i = 1; i <= 7; i++) {
+      snprintf(buf, sizeof(buf), "OUT %d", i);
+      instr_tree_add_node(0x60 + i, buf, 1);
+
+      snprintf(buf, sizeof(buf), "INP %d", i);
+      instr_tree_add_node(0x68 + i, buf, 1);
+  }
+
+  instr_tree_add_node(0x70, "RET",  1);
+  instr_tree_add_node(0x71, "DIS",  1);
+  instr_tree_add_node(0x72, "LDXA", 1);
+  instr_tree_add_node(0x73, "STXD", 1);
+  instr_tree_add_node(0x74, "ADC",  1);
+  instr_tree_add_node(0x75, "SDBC", 1);
+  instr_tree_add_node(0x76, "RSHR", 1);
+  instr_tree_add_node(0x77, "SMB",  1);
+  instr_tree_add_node(0x78, "SAV",  1);
+  instr_tree_add_node(0x79, "MARK", 1);
+  instr_tree_add_node(0x7a, "REQ",  1);
+  instr_tree_add_node(0x7b, "SEQ",  1);
+  instr_tree_add_node(0x7c, "ADCI", 2);
+  instr_tree_add_node(0x7d, "SDBI", 2);
+  instr_tree_add_node(0x7e, "RSHL", 1);
+  instr_tree_add_node(0x7f, "SMBI", 2);
+
+  instr_tree_add_node(0xf0, "LDX",  1);  
+  instr_tree_add_node(0xf1, "OR",   1);   
+  instr_tree_add_node(0xf2, "AND",  1);  
+  instr_tree_add_node(0xf3, "XOR",  1);  
+  instr_tree_add_node(0xf4, "ADD",  1);  
+  instr_tree_add_node(0xf5, "SD",   1);  
+  instr_tree_add_node(0xf6, "SHR",  1);  
+  instr_tree_add_node(0xf7, "SM",   1);  
+  instr_tree_add_node(0xf8, "LDI",  2);  
+  instr_tree_add_node(0xf9, "ORI",  2);  
+  instr_tree_add_node(0xfa, "ANI",  2);  
+  instr_tree_add_node(0xfb, "XRI",  2); 
+  instr_tree_add_node(0xfc, "ADI",  2);   
+  instr_tree_add_node(0xfd, "SDI",  2);  
+  instr_tree_add_node(0xfe, "SHL",  1);  
+  instr_tree_add_node(0xff, "SMI",  2);   
+
+}
+
 
 //void inOrder(struct instr_node* root) {
 //	if (root != NULL) {

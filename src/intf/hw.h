@@ -167,6 +167,7 @@ typedef struct {
   hw_sysbus_t* sysbus;
   
   void* next;
+  void* bps;
 } cdp1802a_chip_t;
 
 typedef struct {

@@ -28,12 +28,12 @@ void handle_mc_end(cdp1802a_chip_t* c) {
 
   c->state.t_state = 0;
   c->state.mc = NON_MEM;
-  c->regs.sp_r[c->regs.xp & 0xf]++;
 
   switch (status) {
 
     // OPF
     case 0:
+      c->regs.sp_r[c->regs.xp & 0xf]++;
       cpu_opc_decode(c);
 
       break;

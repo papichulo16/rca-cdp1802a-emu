@@ -64,7 +64,6 @@ void _dbg_cpu(cdp1802a_chip_t* c, char* args) {
   if (!args) {
 
     dbg_read_all_regs(c);
-
     return; 
   }
 
@@ -73,31 +72,25 @@ void _dbg_cpu(cdp1802a_chip_t* c, char* args) {
   if (!space) {
 
     dbg_read_all_regs(c);
-
     return; 
   }
 
-  printf("huh\n");
-
-  *space = '\0';
-  space++;
+  *space++ = '\0';
 
   if (!strcmp("read", args)) {
 
     dbg_read_reg(c, space);
-
     return;
   }
 
-  if (!strcmp("read", args)) {
+  if (!strcmp("write", args)) {
 
     dbg_write_reg(c, space);
-
     return;
   }
 
   set_red();
-  printf("cpu <read?/write?> <reg?> <val?>\n");
+  printf("Usage: cpu <read?/write?> <reg?> <val?>\n");
   reset_color();
 
 }

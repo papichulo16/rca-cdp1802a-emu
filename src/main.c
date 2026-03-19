@@ -6,6 +6,7 @@
 
 #include "hw.h"
 #include "dbg.h"
+#include "instr_tree.h"
 #include "asm.h"
 #include "utils.h"
 
@@ -26,8 +27,10 @@ void emulator(){
 
   printf("Starting emulator...\n");
   hw_sys_t* sys = malloc(sizeof(hw_sys_t));
+
   hw_sys_init(conf, sys);
   dbg_cmds_init();
+  instr_tree_init();
 
   printf("System config initialized, running emulator...\n\n");
   hw_sys_run(sys);

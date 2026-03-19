@@ -49,6 +49,7 @@ void hw_cpu_init(cdp1802a_chip_t* chip) {
   hw_pin_bar_init(chip);
   hw_sysbus_start(chip);
   chip->next = NULL;
+  chip->bps = NULL;
 
 }
 
