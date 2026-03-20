@@ -1,0 +1,83 @@
+name: SYSTEM
+slaves:
+  - name: cpu_0
+    value: "primary"
+    slaves:
+      - name: registers
+        value: "general_purpose"
+        slaves:
+          - name: R0
+            value: "0x00"
+          - name: R1
+            value: "0xFF"
+          - name: R2
+            value: "0x1A"
+          - name: R3
+            value: "0x2B"
+      - name: alu
+        value: "arithmetic_logic_unit"
+        slaves:
+          - name: accumulator
+            value: "0x00"
+          - name: flags
+            value: "0b00000000"
+      - name: program_counter
+        value: "0x0000"
+
+  - name: cpu_1
+    value: "secondary"
+    slaves:
+      - name: registers
+        value: "general_purpose"
+        slaves:
+          - name: R0
+            value: "0x00"
+          - name: R1
+            value: "0x00"
+      - name: program_counter
+        value: "0x0000"
+
+  - name: memory_bus
+    value: "system_bus"
+    slaves:
+      - name: ram
+        value: "read_write"
+        slaves:
+          - name: bank_0
+            value: "0x0000"
+          - name: bank_1
+            value: "0x1000"
+          - name: bank_2
+            value: "0x2000"
+      - name: rom
+        value: "read_only"
+        slaves:
+          - name: bios
+            value: "0xF000"
+          - name: bootloader
+            value: "0xF800"
+      - name: io
+        value: "input_output"
+        slaves:
+          - name: uart
+            value: "0xE000"
+          - name: gpio
+            value: "0xE010"
+          - name: timer
+            value: "0xE020"
+
+  - name: debugger
+    value: "attached"
+    slaves:
+      - name: breakpoints
+        value: "enabled"
+        slaves:
+          - name: bp_0
+            value: "0x0042"
+          - name: bp_1
+            value: "0x00FF"
+      - name: watchpoints
+        value: "enabled"
+        slaves:
+          - name: wp_0
+            value: "0x1000"
