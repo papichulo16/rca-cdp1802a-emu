@@ -168,6 +168,7 @@ typedef struct {
   
   void* next;
   void* bps;
+  void* po_log;
 } cdp1802a_chip_t;
 
 typedef struct {

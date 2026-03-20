@@ -149,6 +149,7 @@ void dbg_cmds_init() {
   dbg_add_cmd("readi", dbg_read_mem_instr);
 
   dbg_add_cmd("cpu", dbg_cpu);
+  dbg_add_cmd("tim_diag", dbg_print_mc);
 }
 
 void dbg_cmds_clean() {

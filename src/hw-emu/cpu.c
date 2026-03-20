@@ -3,6 +3,7 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "dbg.h"
 #include "utils.h"
 
 void cpu_w_bus_pins(cdp1802a_chip_t* c, uint8_t v) {
@@ -28,6 +29,8 @@ void handle_mc_end(cdp1802a_chip_t* c) {
 
   c->state.t_state = 0;
   c->state.mc = NON_MEM;
+
+  ((dbg_po_t *) c->po_log)->bytes++;
 
   switch (status) {
 
