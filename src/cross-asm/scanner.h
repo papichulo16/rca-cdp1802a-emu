@@ -480,7 +480,7 @@ extern int yylex (yyscan_t yyscanner);
 #undef yyTABLES_NAME
 #endif
 
-#line 31 "scanner.flex"
+#line 39 "scanner.flex"
 
 
 #line 486 "scanner.h"

@@ -16,7 +16,7 @@ void emit_token(yyscan_t scanner, TokenType type);
 %option nounput
 
 DIGIT [0-9]
-LETTER [a-zA-Z]
+LETTER [a-zA-Z_]
 HEX         [0-9A-Fa-f]
 REGISTER    [rR]({DIGIT}|1[0-5]|[a-fA-F])
 
@@ -29,7 +29,7 @@ REGISTER    [rR]({DIGIT}|1[0-5]|[a-fA-F])
 {LETTER}({LETTER}|{DIGIT})*   { emit_token(yyscanner, TOKEN_MNEMONIC); }
 0[xX]{HEX}+                   { emit_token(yyscanner, TOKEN_NUMBER); }
 \${HEX}+                      { emit_token(yyscanner, TOKEN_NUMBER); }
-{HEX}+[hH]                    { emit_token(yyscanner, TOKEN_NUMBER); }
+[0-9]{HEX}*[hH]               { emit_token(yyscanner, TOKEN_NUMBER); } 
 {DIGIT}+                      { emit_token(yyscanner, TOKEN_NUMBER); }
 (,)                           { emit_token(yyscanner, TOKEN_COMMA); } 
 (\n)                          { emit_token(yyscanner, TOKEN_EOL); }
