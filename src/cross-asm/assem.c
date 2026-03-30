@@ -201,7 +201,7 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
       if (strcasecmp(currToken.text, "ORG") == 0) {
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
-          pc = (uint16_t)strtol(curr->data.text, NULL, 0);
+          pc = (uint16_t)curr->data.value;
           printf("PC updated to: %04X\n", pc);
         } else {
           printf("something went wrong with the ORG\n");
