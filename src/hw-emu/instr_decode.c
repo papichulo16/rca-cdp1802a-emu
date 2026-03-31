@@ -127,15 +127,30 @@ void i_reg_6(cdp1802a_chip_t* c) {
 void i_reg_7(cdp1802a_chip_t* c) {
 
   switch (c->regs.in & 0xf) {
-    // ret
+    // ret from ISR
     case 0:
+      exec_mem_trans(c, &c->regs.xp, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
+      c->regs.io = true;
 
       break;
 
     // dis 
     // returns from ISR as well
     case 1:
-      //c->regs.io = false;
+      exec_mem_trans(c, &c->regs.xp, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
+      c->regs.io = false;
 
       break;
 
@@ -203,21 +218,22 @@ void i_reg_7(cdp1802a_chip_t* c) {
 
     // sav 
     case 8:
-      c->data_bus = c->regs.xp;
 
       c->state.mc = MWR;
+      c->data_bus = c->regs.t;
       c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
 
       break;
 
     // mark 
     case 9:
-      c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.xp & 0x0f) << 4);
-
-      c->data_bus = c->regs.xp;
+      c->regs.t = c->regs.xp;
 
       c->state.mc = MWR;
+      c->data_bus = c->regs.xp;
       c->addr = c->regs.sp_r[2];
+
+      c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.xp & 0x0f) << 4);
 
       c->regs.sp_r[2]--;
 

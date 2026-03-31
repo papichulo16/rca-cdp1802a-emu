@@ -155,6 +155,7 @@ typedef struct {
 typedef struct {
 
   bool idle;
+  bool irq;
   uint64_t pinout;
   uint16_t addr;
   uint8_t data_bus;
