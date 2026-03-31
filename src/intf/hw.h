@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef void(*perif_entry) (void*);
+typedef void(*perif_entry) (void*, int);
 
 typedef enum {
     PIN_CLOCK,
@@ -87,6 +87,7 @@ typedef enum {
 
 typedef enum {
 
+  SYS_NONE,
   SYS_MRD,
   SYS_MWR,
   SYS_IOR,
@@ -96,6 +97,7 @@ typedef enum {
 
 typedef struct {
 
+  int id;
   perif_entry* entry;
 
 } hw_peripheral_t;
@@ -164,11 +166,17 @@ typedef struct {
 
   hw_sysbus_t* sysbus;
   
+  void* next;
+  void* bps;
 } cdp1802a_chip_t;
 
-void set_bit(uint64_t* n, uint8_t k);
-void clr_bit(uint64_t* n, uint8_t k);
+typedef struct {
 
-void hw_sys_init(cdp1802a_chip_t* chip);
-void hw_sys_run(cdp1802a_chip_t* chip);
+  cdp1802a_chip_t* head;
+
+} hw_sys_t;
+
+void hw_sys_init(char* conf, hw_sys_t* sys);
+void hw_sys_run(hw_sys_t* sys);
+void hw_sys_cleanup(hw_sys_t* sys);
 

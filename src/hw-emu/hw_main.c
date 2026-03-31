@@ -1,19 +1,17 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "hw.h"
 #include "cpu.h"
 #include "sysbus.h"
+#include "perif.h"
+#include "dbg.h"
+#include "utils.h"
 
 #define ADDR_DECODE_PINS 3U
-
-void set_bit(uint64_t* n, uint8_t k) {
-    *n = (*n | (1 << k));
-}
-
-void clr_bit(uint64_t* n, uint8_t k) {
-    *n = (*n & (~(1 << k)));
-}
 
 void toggle_clock(cdp1802a_chip_t* chip) {
 
@@ -45,20 +43,86 @@ void hw_sysbus_start(cdp1802a_chip_t* c) {
 
 }
 
-void hw_sys_init(cdp1802a_chip_t* chip) {
+void hw_cpu_init(cdp1802a_chip_t* chip) {
 
+  chip->state.mc = RDY;
   hw_pin_bar_init(chip);
   hw_sysbus_start(chip);
+  chip->next = NULL;
+  chip->bps = NULL;
 
 }
 
-void hw_sys_run(cdp1802a_chip_t* chip) {
+// based on YAML given, initialize system
+void hw_sys_init(char* conf, hw_sys_t* sys) {
+
+  // temporary, hardcoded cpu
+  // TODO: YAML parsing
+  cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
+  hw_cpu_init(c);
+
+  sys->head = c;
+
+  // temporary, hardcoded memory
+  int id = perif_mem_init(c->sysbus, 0, 13);
+
+  int fd = open(conf, O_RDONLY);
+  struct stat st;
+  uint8_t buf[0x800];
+
+  fstat(fd, &st);
+
+  int sz = MIN(sizeof(buf), st.st_size);
+
+  read(fd, buf, sz);
+  close(fd);
+
+  perif_mem_memcpy(id, buf, sz);
+
+}
+
+void hw_sys_cleanup(hw_sys_t* sys) {
+
+  cdp1802a_chip_t* c = sys->head;
+  cdp1802a_chip_t* tmp;
+
+  while (c) {
+    perif_mem_cleanup();
+    sysbus_cleanup(c->sysbus);
+    free(c->sysbus);
+
+    tmp = c->next;
+    free(c);
+    c = tmp;
+  }
+
+  sys->head = NULL;
+}
+
+void hw_sys_run(hw_sys_t* sys) {
 
   while(1) {
 
-    toggle_clock(chip);
+    cdp1802a_chip_t* chip = sys->head;
 
-    sleep(1);
+    if (chip->state.mc == RDY) {
+
+      dbg_state_enum ret = dbg_ask(sys->head);
+
+      while (ret == STATE_DBG)
+        ret = dbg_ask(sys->head);
+
+      if (ret == STATE_QUIT)
+        return;
+    }
+
+    while (chip != NULL) {
+
+      toggle_clock(chip);
+
+      chip = chip->next;
+    }
+
   }
 
 }

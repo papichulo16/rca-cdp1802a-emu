@@ -3,14 +3,15 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "utils.h"
 
 void cpu_w_bus_pins(cdp1802a_chip_t* c, uint8_t v) {
 
-  c->pinout = (c ->pinout & ~(0xff << PIN_BUS0)) | (v << PIN_BUS0);
+  c->pinout = (c->pinout & ~(0xffULL << PIN_BUS0)) | (v << PIN_BUS0);
 
 }
 uint8_t cpu_r_bus_pins(cdp1802a_chip_t* c) {
-  return (uint8_t) (c->pinout & (0xff << PIN_BUS0));
+  return (uint8_t) ((c->pinout & (0xffULL << PIN_BUS0)) >> PIN_BUS0);
 }
 
 void cpu_w_ma_pins(cdp1802a_chip_t* c, uint8_t v) {
@@ -19,20 +20,20 @@ void cpu_w_ma_pins(cdp1802a_chip_t* c, uint8_t v) {
 
 }
 uint8_t cpu_r_ma_pins(cdp1802a_chip_t* c) {
-  return (uint8_t) (c->pinout & (0xff << PIN_MA0));
+  return (uint8_t) ((c->pinout & (0xffULL << PIN_MA0)) >> PIN_MA0);
 }
 
 void handle_mc_end(cdp1802a_chip_t* c) {
-  uint8_t status = (uint8_t) ((c->pinout & (3 << PIN_SC0)) >> PIN_SC0);
+  uint8_t status = (uint8_t) ((c->pinout & (3ULL << PIN_SC0)) >> PIN_SC0);
 
   c->state.t_state = 0;
   c->state.mc = NON_MEM;
-  c->regs.sp_r[c->regs.xp & 0xf]++;
 
   switch (status) {
 
     // OPF
     case 0:
+      c->regs.sp_r[c->regs.xp & 0xf]++;
       cpu_opc_decode(c);
 
       break;
@@ -152,7 +153,7 @@ void mem_write(cdp1802a_chip_t* c) {
 void non_memory(cdp1802a_chip_t* c) {
 
   if (c->state.t_state < 7)
-    return
+    return;
 
   handle_mc_end(c);
 

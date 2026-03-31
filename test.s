@@ -1,6 +1,0 @@
-start:
-	MOV R1, R2
-	ADD R2
-	ORI 34H
-gup:
-	MOV R1, 01H

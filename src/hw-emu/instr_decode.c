@@ -63,6 +63,7 @@ void i_reg_3(cdp1802a_chip_t* c) {
 
   c->state.mc = MRD;
   c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+  c->regs.sp_r[c->regs.xp & 0xf]++;
 
 }
 
@@ -242,6 +243,7 @@ void i_reg_7(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -254,6 +256,7 @@ void i_reg_7(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -271,6 +274,7 @@ void i_reg_7(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
   }
@@ -442,6 +446,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -452,6 +457,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -462,6 +468,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -472,6 +479,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -482,6 +490,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -493,6 +502,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
 
@@ -509,6 +519,7 @@ void i_reg_f(cdp1802a_chip_t* c) {
 
       c->state.mc = MRD;
       c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+      c->regs.sp_r[c->regs.xp & 0xf]++;
 
       break;
   }
