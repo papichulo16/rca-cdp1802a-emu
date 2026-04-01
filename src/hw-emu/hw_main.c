@@ -109,7 +109,7 @@ void hw_sys_run(hw_sys_t* sys) {
 
     cdp1802a_chip_t* chip = sys->head;
 
-    if (chip->state.mc == RDY) {
+    if (chip->state.mc == RDY || chip->idle) {
 
       dbg_state_enum ret = dbg_ask(chip);
 

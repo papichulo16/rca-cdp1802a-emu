@@ -17,13 +17,23 @@ hw_sysbus_t* create_fake_sysb(cdp1802a_chip_t* c) {
 }
 
 dbg_state_enum dbg_write_mem_setb(cdp1802a_chip_t* c, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: setb <addr> <byte>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
+
   hw_sysbus_t* fake_sysb = create_fake_sysb(c);
   char* space = strchr(args, ' ');
 
   if (!space) {
 
     set_red();
-    printf("Usage: setb <addr> <byte>\n\n");
+    printf("Usage: setb <addr> <byte>\n");
     reset_color();
 
     return STATE_DBG;
@@ -45,6 +55,16 @@ dbg_state_enum dbg_write_mem_setb(cdp1802a_chip_t* c, char* args) {
 }
 
 dbg_state_enum dbg_read_mem_printw(cdp1802a_chip_t* c, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: readw <addr>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
+
   uint16_t addr = strtol(args, NULL, 0); 
   uint16_t sz = 0x80;
   hw_sysbus_t* fake_sysb = create_fake_sysb(c);
@@ -82,6 +102,15 @@ dbg_state_enum dbg_read_mem_printw(cdp1802a_chip_t* c, char* args) {
 }
 
 dbg_state_enum dbg_read_mem_printb(cdp1802a_chip_t* c, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: readw <addr>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
 
   uint16_t addr = strtol(args, NULL, 0); 
   uint16_t sz = 0x80;

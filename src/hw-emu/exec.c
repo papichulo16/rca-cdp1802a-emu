@@ -105,10 +105,23 @@ void _cpu_execute(cdp1802a_chip_t* c) {
 
 void cpu_execute(cdp1802a_chip_t* c) {
 
-  c->state.mc = RDY;
   _cpu_execute(c);
 
-  memset(&c->exec, '\0', sizeof(cpu_exec_sm_t));
+  if (c->queue.active) {
+
+    c->queue.active = false;
+    c->state.mc = c->queue.mc;
+    c->addr = c->queue.addr;
+    c->data_bus = c->queue.data_bus;
+    memcpy(&c->exec, &c->queue.exec, sizeof(cpu_exec_sm_t));
+    memset(&c->queue.exec, '\0', sizeof(cpu_exec_sm_t));
+
+  } else {
+
+    c->state.mc = RDY;
+    c->pinout = (c->pinout & ~(3 << PIN_SC0));
+    memset(&c->exec, '\0', sizeof(cpu_exec_sm_t));
+  }
 
 }
 
