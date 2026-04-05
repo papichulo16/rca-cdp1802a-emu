@@ -310,6 +310,52 @@ void pass2(tokenNode **myNode, labelNode **symbolTable) {
   // we use an output buffer to make this easy
   // The symbol table we built earlier is also used in this process to translate
   // labels to memory addresses
+
+  uint16_t pc = 0x0000;
+  uint16_t minPc = 0xFFFF;
+  uint16_t maxPc = 0x0000;
+
+  uint8_t binBuf[65536];
+
+  tokenNode *curr = *myNode;
+  Token currToken;
+
+  while (curr != NULL && curr->data.type != TOKEN_EOF) {
+    currToken = curr->data;
+
+    switch (currToken.type) {
+    case TOKEN_LABEL:
+      // TODO label processing
+      break;
+    case TOKEN_MNEMONIC:
+      // TODO mmnemonic processing (the meat)
+      break;
+    case TOKEN_COMMENT:
+    case TOKEN_EOL:
+    case TOKEN_EOF:
+    case TOKEN_UNKNOWN:
+    case TOKEN_ERROR:
+    case TOKEN_REGISTER:
+    case TOKEN_COMMA:
+    case TOKEN_NUMBER:
+      break;
+    }
+
+    curr = curr->next;
+  }
+
+  // Handle the actual file output
+  FILE *binary = fopen("output.bin", "wb");
+
+  // make sure the file opened properly, then output from the memory addresses
+  // that were actually used
+  if (binary != NULL) {
+    fwrite(&binBuf[minPc], 1, maxPc - minPc, binary);
+    fclose(binary);
+  } else {
+    printf("The output binary file could not be created. Aborting.\n");
+    exit(-1);
+  }
 }
 
 void assem(queue *tokens) {
