@@ -1,12 +1,14 @@
-#include "token.h"
+#include "../intf/token.h"
 
-#include "tokenQueue.h"
+#include "../intf/tokenQueue.h"
 // specific
 #include "scanner.h"
 
-#include "lexer.h"
+#include "../intf/lexer.h"
 
-#include "asm.h"
+#include "../intf/asm.h"
+
+#include "../intf/assem.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +47,20 @@ void asm_main(char* inf) {
 
   tokenize(srcptr, funnyTokens);
 
+
+  //where the actual magic happens
+  assem(funnyTokens);
+
+
+
   // close the file
   fclose(srcptr);
 }
 
+/*
+int main(int argc, char** argv){
+    asm_main(argv[1]);
+    return 0;
+
+}
+*/

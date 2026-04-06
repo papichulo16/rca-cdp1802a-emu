@@ -1,15 +1,18 @@
 
-#include "token.h"
+#include "../intf/token.h"
 
-#include "tokenQueue.h"
+#include "../intf/tokenQueue.h"
 
-#include "lexer.h"
+#include "../intf/lexer.h"
 
 #include "scanner.h"
 
 #include <stdio.h>
 #include <string.h>
 
+
+//This is now done in assem.c since im not interested in queueing and dequeuing a bunch lol
+/*
 // Function to actually tell what tokens we have from the enums
 // switch statement actually makes it very intuitive
 const char *get_token_name(TokenType type) {
@@ -39,6 +42,8 @@ const char *get_token_name(TokenType type) {
   }
 }
 
+*/
+
 void tokenize(FILE *srcptr, queue *result) {
 
   // initialize flex scanner, the extra data (queue), set file pointer in, then
@@ -58,9 +63,14 @@ void tokenize(FILE *srcptr, queue *result) {
     printf("it's not empty\n");
   }
 
+
+  //This is now done in assem.c since im not interested in queueing and dequeueing lol
+  /*
   // List out the tokens and their raw text
   while (!isEmpty(result)) {
     Token currToken = dequeue(result);
     printf("%s : %s\n", get_token_name(currToken.type), currToken.text);
   }
+
+  */
 }
