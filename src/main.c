@@ -19,7 +19,7 @@ bool emulate = false;
 
 void assembler() {
 
-  asm_main(inf);
+  asm_main(inf, outf);
 
 }
 

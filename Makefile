@@ -1,34 +1,30 @@
 CC      := gcc
 CFLAGS  := -Wall -Wextra -O2 -Isrc/intf -g
-FLEX    := flex
 SRC_DIR := src
 BUILD_DIR := build/obj
 INTF_DIR := src/intf
+ASM_DIR := src/cross-asm
 TARGET := rca1802emu
 
-FLEX_SRC := src/cross-asm/scanner.flex
-FLEX_OUT := $(INTF_DIR)/lex.yy.c
-FLEX_HDR := $(INTF_DIR)/scanner.h
-
-# Find regular sources (flex output will be added as prerequisite)
-SRCS := $(shell find $(SRC_DIR) -name '*.c' ! -name 'lex.yy.c' 2>/dev/null || true)
-OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SRCS)))
+FLEX_SRC := $(ASM_DIR)/scanner.flex
+FLEX_OUT := $(ASM_DIR)/lex.yy.c
+FLEX_HDR := $(ASM_DIR)/scanner.h
 FLEX_OBJ := $(BUILD_DIR)/lex.yy.o
 
-all: $(TARGET)
+SRCS := $(shell find $(SRC_DIR) -name '*.c' ! -name 'lex.yy.c' 2>/dev/null || true)
+OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SRCS)))
+
+.PHONY: all clean flex-setup
+
+all: flex-setup $(TARGET)
+
+flex-setup:
+	cd $(ASM_DIR) && ./flex_setup.sh && cd ../../
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# Generate flex file in intf directory
-$(FLEX_OUT): $(FLEX_SRC) | $(INTF_DIR)
-	$(FLEX) --header-file=$(FLEX_HDR) -o $(FLEX_OUT) $(FLEX_SRC)
-	mv scanner.h $(FLEX_HDR) 2>/dev/null || true
-
-$(INTF_DIR):
-	mkdir -p $(INTF_DIR)
-
-# Compile flex output
+# Compile the flex-generated C file into an object — depends on flex-setup having run
 $(FLEX_OBJ): $(FLEX_OUT) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(FLEX_OUT) -o $@
 
@@ -41,6 +37,4 @@ $(BUILD_DIR)/%.o: | $(BUILD_DIR)
 
 clean:
 	rm -rf $(BUILD_DIR)/* $(TARGET)
-	rm -f $(FLEX_OUT) $(FLEX_HDR)
-
-.PHONY: all clean
+	#cd $(ASM_DIR) && ./flex_cleanup.sh

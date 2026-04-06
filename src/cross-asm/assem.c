@@ -1,13 +1,13 @@
-#include "../intf/instrLL.h"
-#include "../intf/instrTable.h"
-#include "../intf/tokenLL.h"
+#include "instrLL.h"
+#include "instrTable.h"
+#include "tokenLL.h"
 
-#include "../intf/token.h"
-#include "../intf/tokenQueue.h"
+#include "token.h"
+#include "tokenQueue.h"
 
 // #include "../intf/lexer.h"
 
-#include "../intf/assem.h"
+#include "assem.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -302,10 +302,10 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
 
   printLabels(*symbolTable);
   printf("label count: %d, mnemonic count: %d\n", label_count, mnemonic_count);
-  printf("final pc: %x\n", pc);
+  //printf("final pc: %x\n", pc);
 }
 
-void pass2(tokenNode **myNode, labelNode **symbolTable) {
+void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
   // here we actually build the binary
   // we use an output buffer to make this easy
   // The symbol table we built earlier is also used in this process to translate
@@ -345,7 +345,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable) {
   }
 
   // Handle the actual file output
-  FILE *binary = fopen("output.bin", "wb");
+  FILE *binary = fopen(outf, "wb");
 
   // make sure the file opened properly, then output from the memory addresses
   // that were actually used
@@ -358,7 +358,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable) {
   }
 }
 
-void assem(queue *tokens) {
+void assem(queue *tokens, char* outf) {
 
   // move what is in the queue into the linked list
   tokenNode *linkedTokens = NULL;
@@ -387,7 +387,7 @@ void assem(queue *tokens) {
 
   // actually figure out putting together the binary piece
   // probably need to set up output buffer to a file
-  pass2(&linkedTokens, &symbolTable);
+  pass2(&linkedTokens, &symbolTable, outf);
 
   return;
 }

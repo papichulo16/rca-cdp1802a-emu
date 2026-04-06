@@ -258,66 +258,38 @@ void instr_tree_init() {
   instr_tree_add_node(0xfe, "SHL",  1);  
   instr_tree_add_node(0xff, "SMI",  2);   
 
+  instr_tree_add_node(0x30, "SBR",  2);   
+  instr_tree_add_node(0x31, "SBQ",  2);   
+  instr_tree_add_node(0x32, "SBZ",  2);   
+  instr_tree_add_node(0x33, "SDF",  2);   
+  instr_tree_add_node(0x34, "SB1",  2);   
+  instr_tree_add_node(0x35, "SB2",  2);   
+  instr_tree_add_node(0x36, "SB3",  2);   
+  instr_tree_add_node(0x37, "SB4",  2);   
+  instr_tree_add_node(0x38, "SNBR",  2);   
+  instr_tree_add_node(0x39, "SBNQ",  2);   
+  instr_tree_add_node(0x3a, "SBNZ",  2);   
+  instr_tree_add_node(0x3b, "SBNF",  2);   
+  instr_tree_add_node(0x3c, "SBN1",  2);   
+  instr_tree_add_node(0x3d, "SBN2",  2);   
+  instr_tree_add_node(0x3e, "SBN3",  2);   
+  instr_tree_add_node(0x3f, "SBN4",  2);   
+
+  instr_tree_add_node(0xc0, "LBR",  3);   
+  instr_tree_add_node(0xc1, "LBQ",  3);   
+  instr_tree_add_node(0xc2, "LBZ",  3);   
+  instr_tree_add_node(0xc3, "LBDF",  3);   
+  instr_tree_add_node(0xc4, "NOP",  1);   
+  instr_tree_add_node(0xc5, "LSNQ",  3);   
+  instr_tree_add_node(0xc6, "LSNZ",  3);   
+  instr_tree_add_node(0xc7, "LSNF",  3);   
+  instr_tree_add_node(0xc8, "LSKP",  3);   
+  instr_tree_add_node(0xc9, "LBNQ",  3);   
+  instr_tree_add_node(0xca, "LBNZ",  3);   
+  instr_tree_add_node(0xcb, "LBNF",  3);   
+  instr_tree_add_node(0xcc, "LSIE",  3);   
+  instr_tree_add_node(0xcd, "LSQ",  3);   
+  instr_tree_add_node(0xce, "LSZ",  3);   
+  instr_tree_add_node(0xcf, "LSDF",  3);   
 }
 
-
-//void inOrder(struct instr_node* root) {
-//	if (root != NULL) {
-//		inOrder(root->left);
-//		printf("%d ", root->key);
-//		inOrder(root->right);
-//	}
-//}
-
-/*
-int main() {
-    struct instr_node* root = NULL;
-    
-	//Testing vals
-	Instruction insts[] = {
-        {0x00, "IDL"},
-        {0x01, "LDN"},
-        {0x30, "BR"},
-        {0xF8, "LDI"},
-        {0xA0, "PLO"}
-    };
-    
-    for (int i = 0; i < 5; i++) {
-        root = insert(root, insts[i]);
-    }
-    
-    // User input section
-    char input[50];
-    printf("Enter opcode or mnemonic: ");
-    
-    if (scanf("%s", input) != 1) {
-        printf("Error reading input\n");
-        return 1;
-    }
-    
-    // Check if input is a hex opcode
-    if (input[0] == '0' && (input[1] == 'x' || input[1] == 'X')) {
-        // Parse as hexadecimal opcode
-        int opcode;
-        if (sscanf(input, "%x", &opcode) == 1) {
-            Instruction* result = avl_find_by_opcode(root, opcode);
-            if (result) {
-                printf("Opcode 0x%02X -> Mnemonic: %s\n", result->opcode, result->mnemonic);
-            } else {
-                printf("Opcode 0x%02X not found\n", opcode);
-            }
-        } else {
-            printf("Invalid opcode format\n");
-        }
-    } else {
-        Instruction* result = avl_find_by_mnemonic(root, input);
-        if (result) {
-            printf("Mnemonic %s -> Opcode: 0x%02X\n", result->mnemonic, result->opcode);
-        } else {
-            printf("Mnemonic '%s' not found\n", input);
-        }
-    }
-    
-    return 0;
-}
-*/	

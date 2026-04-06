@@ -5,6 +5,6 @@
 
 #include <stdio.h>
 
-void assem(queue *tokens);
+void assem(queue *tokens, char* outf);
 
 #endif
