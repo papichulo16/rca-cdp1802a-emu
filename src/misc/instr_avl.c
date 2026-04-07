@@ -184,7 +184,7 @@ void instr_tree_init() {
     snprintf(buf, sizeof(buf), "DEC R%d", i);
     instr_tree_add_node(0x20 + i, buf, 1);
 
-    instr_tree_add_node(0x30 + i, "B", 2);
+    //instr_tree_add_node(0x30 + i, "B", 2);
 
     snprintf(buf, sizeof(buf), "LDA R%d", i);
     instr_tree_add_node(0x40 + i, buf, 1);

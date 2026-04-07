@@ -1,13 +1,13 @@
-#include "instrLL.h"
-#include "instrTable.h"
-#include "tokenLL.h"
+#include "../intf/instrLL.h"
+#include "../intf/instrTable.h"
+#include "../intf/tokenLL.h"
 
-#include "token.h"
-#include "tokenQueue.h"
+#include "../intf/token.h"
+#include "../intf/tokenQueue.h"
 
 // #include "../intf/lexer.h"
 
-#include "assem.h"
+#include "../intf/assem.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -221,7 +221,8 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
           // things can go wrong here if there are labels that are more than one
           // byte
           if (curr->data.type == TOKEN_NUMBER ||
-              curr->data.type == TOKEN_LABEL) {
+              curr->data.type == TOKEN_LABEL ||
+              curr->data.type == TOKEN_MNEMONIC) {
             byte_count++;
           }
         }
@@ -302,7 +303,7 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
 
   printLabels(*symbolTable);
   printf("label count: %d, mnemonic count: %d\n", label_count, mnemonic_count);
-  //printf("final pc: %x\n", pc);
+  printf("final pc: %x\n", pc);
 }
 
 void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
@@ -325,11 +326,197 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
 
     switch (currToken.type) {
     case TOKEN_LABEL:
-      // TODO label processing
+      // until further notice I don't think anything needs to be done here
       break;
     case TOKEN_MNEMONIC:
-      // TODO mmnemonic processing (the meat)
+      // ORG directive
+      if (strcasecmp(currToken.text, "ORG") == 0) {
+        printf("ORG directive\n");
+        if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
+          curr = curr->next;
+          pc = (uint16_t)curr->data.value;
+          printf("Set to 0x%x\n", pc);
+        }
+        break;
+      }
+
+      // i know this sounds weird, but EQU directive
+      // Technically there is already a label for it
+      // BUT the directive itself is handled as a mnemonic so we need to skip
+      // over it
+      if (strcasecmp(currToken.text, "EQU") == 0) {
+        printf("EQU directive (do nothing useful except skip ahead)\n");
+        if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
+          curr = curr->next;
+        }
+        break;
+      }
+
+      // handle DB directive
+      // works with just a byte or the lower 8 bits of a label so far
+      // in the future maybe we will do strings
+      if (strcasecmp(currToken.text, "DB") == 0) {
+        printf("DB directive\n");
+        while (curr->next != NULL && curr->next->data.type != TOKEN_EOL &&
+               curr->next->data.type != TOKEN_EOF &&
+               curr->next->data.type != TOKEN_COMMENT) {
+          curr = curr->next;
+
+          if (curr->data.type == TOKEN_NUMBER) {
+            if (pc < minPc) {
+              minPc = pc;
+            }
+
+            binBuf[pc] = (uint8_t)(curr->data.value & 0xFF);
+            pc++;
+
+            if (pc > maxPc) {
+              maxPc = pc;
+            }
+
+          } else if (curr->data.type == TOKEN_LABEL ||
+                     curr->data.type == TOKEN_MNEMONIC) {
+            // Make use of lower 8 bits of a label using bitwise and
+            // ill think about doing strings at another time
+            label *myLabel = findLabel(*symbolTable, curr->data.text);
+            if (pc < minPc) {
+              minPc = pc;
+            }
+
+            if (myLabel) {
+              binBuf[pc] = (uint8_t)(myLabel->address & 0xFF);
+            } else {
+              binBuf[pc] = 0x00;
+            }
+            pc++;
+
+            if (pc > maxPc) {
+              maxPc = pc;
+            }
+          }
+        }
+        break;
+      }
+
+      // Now that we have dealt with the other stuff, we either have an
+      // instruction or some garbage
+      InstructionInfo *info = findInstr(currToken.text);
+      printf("%s", currToken.text);
+      if (info != NULL) {
+        if (pc < minPc)
+          minPc = pc;
+
+        // Make our opcode byte
+        uint8_t opcode;
+        if (info->n != -1) {
+          opcode = (info->i << 4) | (info->n & 0x0F);
+        } else {
+          // We handle the lower nibble later since this instruction needs it
+          opcode = (info->i << 4);
+        }
+
+        binBuf[pc] = opcode;
+        pc++;
+
+        // Is there something coming up?
+        // Go to it because we need to build the opcode/operands if so
+        if (curr->next != NULL && curr->next->data.type != TOKEN_EOL &&
+            curr->next->data.type != TOKEN_COMMENT) {
+          curr = curr->next;
+        } else {
+          // I saw nothing, ill just move on then
+          if (pc > maxPc) {
+            maxPc = pc;
+          }
+
+          break;
+        }
+
+        // Our instruction info came with a piece of information for free
+        // Now we get to use this information to determine what to do with the
+        // token(s) after
+        switch (info->type) {
+        case OP_REG:
+        case OP_REG_N0:
+          if (curr->data.type == TOKEN_REGISTER) {
+            // not sure how well this actually works for registers, investigate
+            int regVal = (int)strtol(curr->data.text + 1, NULL, 0);
+            binBuf[pc - 1] |= (regVal & 0x0F);
+          }
+          break;
+        case OP_PORT_OUT:
+        case OP_PORT_INP:
+          if (curr->data.type == TOKEN_NUMBER) {
+            binBuf[pc - 1] |= (curr->data.value & 0x07);
+          }
+          break;
+        // 2 bytes
+        case OP_IMM:
+        case OP_ADDR8:
+          if (curr->data.type == TOKEN_NUMBER) {
+            binBuf[pc] = (uint8_t)(curr->data.value & 0xFF);
+            pc++;
+          } else if (curr->data.type == TOKEN_LABEL ||
+                     curr->data.type == TOKEN_MNEMONIC) {
+            label *myLabel = findLabel(*symbolTable, curr->data.text);
+            if (myLabel) {
+              binBuf[pc] = (uint8_t)(myLabel->address & 0xFF);
+            } else {
+              printf("Bad label, things will go wrong. 0x00 at 0x%x\n", pc);
+              binBuf[pc] = 0x00;
+            }
+            pc++;
+          }
+          break;
+          // 3 bytes (evil)
+        case OP_ADDR16:
+          // so it doesnt explode when you try to compile on a slightly older
+          // system
+          while (0) {
+          }
+
+          uint16_t addr = 0x0000;
+          if (curr->data.type == TOKEN_NUMBER) {
+            addr = (uint16_t)curr->data.value;
+          } else if (curr->data.type == TOKEN_LABEL ||
+                     curr->data.type == TOKEN_MNEMONIC) {
+            label *myLabel = findLabel(*symbolTable, curr->data.text);
+            if (myLabel) {
+              addr = myLabel->address;
+            }
+          }
+
+          // endianness wackiness when dealing with a 3 byte instruction
+          binBuf[pc] = (uint8_t)((addr >> 8) & 0xFF);
+          pc++;
+          binBuf[pc] = (uint8_t)(addr & 0xFF);
+          pc++;
+          break;
+
+        default:
+          break;
+        }
+
+        if (pc > maxPc) {
+          maxPc = pc;
+        }
+
+      } else {
+        printf("Unknown mnemonic '%s' at PC %04X, aborting\n", currToken.text,
+               pc);
+        exit(-1);
+      }
+
+      // obliterate the rest of the garbage
+      while (curr->next != NULL && curr->next->data.type != TOKEN_EOL &&
+             curr->next->data.type != TOKEN_COMMENT &&
+             curr->next->data.type != TOKEN_EOF) {
+        curr = curr->next;
+      }
+
       break;
+
+    // We ignore other tokens, they are handled with the mnemonic case
     case TOKEN_COMMENT:
     case TOKEN_EOL:
     case TOKEN_EOF:
@@ -344,14 +531,21 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
     curr = curr->next;
   }
 
+  if (maxPc <= minPc) {
+    printf("Did you actually write a program? Nothing written.\n");
+    return;
+  }
+
   // Handle the actual file output
   FILE *binary = fopen(outf, "wb");
 
   // make sure the file opened properly, then output from the memory addresses
   // that were actually used
   if (binary != NULL) {
+
     fwrite(&binBuf[minPc], 1, maxPc - minPc, binary);
     fclose(binary);
+    printf("Wrote %d bytes to output.bin\n", maxPc - minPc);
   } else {
     printf("The output binary file could not be created. Aborting.\n");
     exit(-1);
