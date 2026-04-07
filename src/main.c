@@ -37,14 +37,14 @@ void emulator(){
 
   if (!sys->head) {
 
-    printf("[main.c] ERROR: no CPU initialized, exiting.\n")
+    printf("[main.c] ERROR: no CPU initialized, exiting.\n");
     
     exit(-1);
   }
 
   hw_sys_run(sys);
 
-  printf("Exiting...\n\n");
+  printf("Exiting...\n");
   hw_sys_cleanup(sys);
   dbg_cmds_clean();
   free(sys);

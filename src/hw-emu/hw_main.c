@@ -71,20 +71,14 @@ void small_system(char* conf, hw_sys_t* sys) {
 
   // temporary, hardcoded memory
   int id = perif_mem_init(c->sysbus, 0, 13);
+  mem_info_t* tmp = malloc(sizeof(mem_info_t));
 
-  int fd = open(conf, O_RDONLY);
-  struct stat st;
-  uint8_t buf[0x800];
+  tmp->id = id;
+  tmp->addr = 0;
 
-  fstat(fd, &st);
+  sys_build_parse_file(c, conf, tmp, 1);
 
-  int sz = MIN(sizeof(buf), st.st_size);
-
-  read(fd, buf, sz);
-  close(fd);
-
-  perif_mem_memcpy(id, buf, sz);
-
+  free(tmp);
 }
 
 void manual_system(char* conf, hw_sys_t* sys) {
