@@ -19,7 +19,7 @@ static const cyaml_schema_value_t slave_schema = {
 };
 
 static const cyaml_schema_field_t master_fields_schema[] = {
-    CYAML_FIELD_STRING_PTR("name", CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL, struct master, name, 0, CYAML_UNLIMITED),
+    CYAML_FIELD_STRING_PTR("value", CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL, struct master, name, 0, CYAML_UNLIMITED),
     CYAML_FIELD_SEQUENCE("slaves", CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL, struct master, slaves, &slave_schema, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END
 };
@@ -65,8 +65,10 @@ void free_master_yaml(master_t *master)
 {
     if (master == NULL) return;
     cyaml_err_t err = cyaml_free(&cyaml_cfg, &top_schema, master, 0);
-    if (err != CYAML_OK)
+    if (err != CYAML_OK) {
         fprintf(stderr, "yaml_parser: cyaml_free error: %s\n", cyaml_strerror(err));
+        exit(-1);
+    }
 }
 
 static void print_slaves(const slave_t *s, unsigned int depth)
@@ -90,8 +92,8 @@ static void print_slaves(const slave_t *s, unsigned int depth)
 void print_master(const master_t *master)
 {
     if (master == NULL) {
-	printf("[master] (null)\n");
-	return;
+      printf("[master] (null)\n");
+      return;
     }
 
     printf("[master] name: %s\n", master->name ? master->name : "(none)");
@@ -99,7 +101,7 @@ void print_master(const master_t *master)
     print_slaves(master->slaves, 1);
 }
 
-void parse_yaml(char* file)
+master_t* parse_yaml(char* file)
 {
 
     master_t *machine = NULL;
@@ -107,14 +109,15 @@ void parse_yaml(char* file)
     cyaml_err_t err = load_master_yaml(file, &machine);
 
     if (err != CYAML_OK) {
-        printf("Failed to load YAML: %s\n", cyaml_strerror(err));
 
-        return;
+        printf("Failed to load YAML: %s\n", cyaml_strerror(err));
+        exit(-1);
+
+        return NULL;
     }
 
     build_slave_list(machine);
-    print_master(machine);
-    free_master_yaml(machine);
-
+  
+    return machine;
 }
 

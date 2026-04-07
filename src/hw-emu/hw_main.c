@@ -7,6 +7,7 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "sys_build.h"
 #include "sysbus.h"
 #include "perif.h"
 #include "dbg.h"
@@ -39,17 +40,17 @@ void hw_pin_bar_init(cdp1802a_chip_t* c) {
 
 }
 
-void hw_sysbus_start(cdp1802a_chip_t* c) {
+void hw_sysbus_start(cdp1802a_chip_t* c, int decode_pins) {
 
-  c->sysbus = create_sysbus_obj(c, ADDR_DECODE_PINS);
+  c->sysbus = create_sysbus_obj(c, decode_pins);
 
 }
 
-void hw_cpu_init(cdp1802a_chip_t* chip) {
+void hw_cpu_init(cdp1802a_chip_t* chip, int decode_pins) {
 
   chip->state.mc = RDY;
   hw_pin_bar_init(chip);
-  hw_sysbus_start(chip);
+  hw_sysbus_start(chip, decode_pins);
   chip->next = NULL;
   chip->bps = NULL;
   chip->po_log = malloc(sizeof(dbg_po_t));
@@ -63,8 +64,9 @@ void small_system(char* conf, hw_sys_t* sys) {
   // temporary, hardcoded cpu
   // TODO: YAML parsing
   cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
-  hw_cpu_init(c);
+  hw_cpu_init(c, ADDR_DECODE_PINS);
 
+  c->name = "lone_cpu";
   sys->head = c;
 
   // temporary, hardcoded memory
@@ -86,7 +88,11 @@ void small_system(char* conf, hw_sys_t* sys) {
 }
 
 void manual_system(char* conf, hw_sys_t* sys) {
-  parse_yaml(conf);
+  master_t* master = parse_yaml(conf);
+
+  sys_build(sys, master);
+
+  free_master_yaml(master);
 }
 
 // based on YAML given, initialize system

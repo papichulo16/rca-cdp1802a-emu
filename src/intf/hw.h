@@ -165,6 +165,7 @@ typedef struct {
 
 typedef struct {
 
+  char* name;
   bool idle;
   bool irq;
   uint64_t pinout;
@@ -190,6 +191,7 @@ typedef struct {
 
 } hw_sys_t;
 
+void hw_cpu_init(cdp1802a_chip_t* chip, int decode_pins);
 void hw_sys_init(char* conf, hw_sys_t* sys, int yaml);
 void hw_sys_run(hw_sys_t* sys);
 void hw_sys_cleanup(hw_sys_t* sys);
