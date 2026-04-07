@@ -61,16 +61,14 @@ void hw_cpu_init(cdp1802a_chip_t* chip, int decode_pins) {
 
 void small_system(char* conf, hw_sys_t* sys) {
 
-  // temporary, hardcoded cpu
-  // TODO: YAML parsing
+  // if no yaml file specified, just have one large fake memory chip
   cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
   hw_cpu_init(c, ADDR_DECODE_PINS);
 
   c->name = "lone_cpu";
   sys->head = c;
 
-  // temporary, hardcoded memory
-  int id = perif_mem_init(c->sysbus, 0, 13);
+  int id = perif_mem_init(c->sysbus, 0, 16);
   mem_info_t* tmp = malloc(sizeof(mem_info_t));
 
   tmp->id = id;

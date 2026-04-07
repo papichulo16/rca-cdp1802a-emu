@@ -13,5 +13,5 @@ typedef struct {
 
 int perif_mem_init(hw_sysbus_t* sysb, uint16_t addr, uint8_t addr_lines);
 void perif_mem_cleanup();
-void perif_mem_memcpy(int id, void* src, size_t len);
+void perif_mem_memcpy(int id, void* src, size_t len, size_t off);
 

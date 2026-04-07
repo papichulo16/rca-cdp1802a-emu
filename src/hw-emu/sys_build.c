@@ -50,6 +50,7 @@ void sys_build_parse_file(cdp1802a_chip_t* c, char* f, mem_info_t* mem_arr, size
   int count;
   int id;
   int sz;
+  int off;
   long start;
   uint8_t* buf;
   struct stat st;
@@ -97,7 +98,12 @@ void sys_build_parse_file(cdp1802a_chip_t* c, char* f, mem_info_t* mem_arr, size
 
     buf = malloc(sz);
 
-    perif_mem_memcpy(id, buf, sz);
+    fseek(fd, start + arr[i].off, SEEK_SET);
+    fread(buf, sz, 1, fd);
+
+    off = arr[i].org - (sysbus_perif_idx_get(c->sysbus, arr[i].org) << (16 - c->sysbus->decode_pin_count));
+    
+    perif_mem_memcpy(id, buf, sz, off);
 
     free(buf);
   }
@@ -106,7 +112,7 @@ void sys_build_parse_file(cdp1802a_chip_t* c, char* f, mem_info_t* mem_arr, size
   free(arr);
 }
 
-slave_t* get_slave_w_val(slave_t* master, char* name) {
+slave_t* get_slave_w_name(slave_t* master, char* name) {
   
   slave_t* cur_slave = master->slaves;
   
@@ -121,25 +127,94 @@ slave_t* get_slave_w_val(slave_t* master, char* name) {
   return NULL;
 }
 
+int get_count_w_name(slave_t* master, char* name) {
+  
+  slave_t* cur_slave = master->slaves;
+  int count = 0;
+  
+  for (int i = 0; i < master->slaves_count; i++) {
+
+    if (!strcmp(name, cur_slave->name))
+      count++;
+
+    cur_slave = cur_slave->next;
+  }
+
+  return count;
+}
+
+void build_mem_arr(cdp1802a_chip_t* c, slave_t* devices, mem_info_t* mem_arr) {
+
+  slave_t* cur_slave = devices->slaves;
+  int count = 0;
+  
+  for (int i = 0; i < devices->slaves_count; i++) {
+
+    if (!strcmp("memory", cur_slave->name)) {
+
+      int decoder_line = atoi(get_slave_w_name(cur_slave, "decoder_line")->value);
+      int address_lines = atoi(get_slave_w_name(cur_slave, "address_lines")->value);
+
+      if (address_lines + c->sysbus->decode_pin_count > 16) {
+
+        printf("[sys_build.c] WARNING: CPU %s mix of decoder lines and address lines for memory device %d exceeds 16. Skipping.\n", c->name, count);
+
+        cur_slave = cur_slave->next;
+        continue;
+      }
+
+      mem_arr[count].addr = decoder_line << (16 - c->sysbus->decode_pin_count);
+      mem_arr[count].id = perif_mem_init(c->sysbus, mem_arr[count].addr, address_lines);
+      
+      count++;
+    }
+
+    cur_slave = cur_slave->next;
+  }
+}
+
 void build_cpu_obj(hw_sys_t* sys, slave_t* slave) {
 
   slave_t* decoder_lines;
-  slave_t* sysbus_slave = get_slave_w_val(slave, "sysbus");
+  slave_t* sysbus_slave = get_slave_w_name(slave, "sysbus");
   
   if (!sysbus_slave) {
 
-    printf("[sys_build.c] WARNING: CPU %s has no sysbus, ignoring.\n", slave->value ? slave->value : "(NULL)");
+    printf("[sys_build.c] WARNING: CPU %s has no sysbus, ignoring CPU.\n", slave->value ? slave->value : "(NULL)");
     return;
   }
 
-  decoder_lines = get_slave_w_val(sysbus_slave, "decoder_line_count");
+  slave_t* devices_slave = get_slave_w_name(sysbus_slave, "devices");
 
+  if (!devices_slave) {
+
+    printf("[sys_build.c] WARNING: CPU %s sysbus has no devices, ignoring CPU.\n", slave->value ? slave->value : "(NULL)");
+    return;
+  }
+
+  int mem_count = get_count_w_name(devices_slave, "memory");
+
+  if (!mem_count) {
+
+    printf("[sys_build.c] WARNING: CPU %s sysbus has no memory, ignoring CPU.\n", slave->value ? slave->value : "(NULL)");
+    return;
+  }
+
+  decoder_lines = get_slave_w_name(sysbus_slave, "decoder_line_count");
+
+  mem_info_t* mem_arr = malloc(sizeof(mem_info_t) * mem_count);
   cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
   hw_cpu_init(c, decoder_lines ? atoi(decoder_lines->value) : 0);
 
   c->name = slave->value;
   c->next = sys->head;
   sys->head = c;
+
+  build_mem_arr(c, devices_slave, mem_arr);
+
+  sys_build_parse_file(c, devices_slave->value, mem_arr, mem_count);
+
+  free(mem_arr);
 }
 
 void dispatch_sys_device(hw_sys_t* sys, slave_t* slave) {

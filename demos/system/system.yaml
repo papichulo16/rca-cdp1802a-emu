@@ -10,11 +10,10 @@ slaves:
             value: "3"
 
           - name: devices 
+            value: "./blinky.o"
             slaves:
               - name: memory # 0x0-0x1fff
                 slaves:
-                  - name: file
-                    value: "./blinky.o"
                   - name: decoder_line
                     value: "0"
                   - name: address_lines
@@ -22,8 +21,6 @@ slaves:
 
               - name: memory # 0x6000-0x7fff
                 slaves:
-                  - name: file
-                    value: "./blinky.o"
                   - name: decoder_line
                     value: "3"
                   - name: address_lines
@@ -31,8 +28,6 @@ slaves:
 
               - name: memory # 0xe000-0xffff
                 slaves:
-                  - name: file
-                    value: "./blinky.o"
                   - name: decoder_line
                     value: "7"
                   - name: address_lines
