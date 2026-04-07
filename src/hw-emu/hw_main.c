@@ -11,6 +11,7 @@
 #include "perif.h"
 #include "dbg.h"
 #include "utils.h"
+#include "yaml_parser.h"
 
 #define ADDR_DECODE_PINS 3U
 
@@ -57,8 +58,7 @@ void hw_cpu_init(cdp1802a_chip_t* chip) {
 
 }
 
-// based on YAML given, initialize system
-void hw_sys_init(char* conf, hw_sys_t* sys) {
+void small_system(char* conf, hw_sys_t* sys) {
 
   // temporary, hardcoded cpu
   // TODO: YAML parsing
@@ -83,6 +83,19 @@ void hw_sys_init(char* conf, hw_sys_t* sys) {
 
   perif_mem_memcpy(id, buf, sz);
 
+}
+
+void manual_system(char* conf, hw_sys_t* sys) {
+  parse_yaml(conf);
+}
+
+// based on YAML given, initialize system
+void hw_sys_init(char* conf, hw_sys_t* sys, int yaml) {
+  if (yaml) {
+    manual_system(conf, sys);
+  } else {
+    small_system(conf, sys);
+  }
 }
 
 void hw_sys_cleanup(hw_sys_t* sys) {

@@ -14,6 +14,7 @@ char* binary;
 char* outf = "a.out";
 char* inf;
 char* conf;
+int yaml = 0;
 bool assemble = false;
 bool emulate = false;
 
@@ -28,7 +29,7 @@ void emulator(){
   printf("Starting emulator...\n");
   hw_sys_t* sys = malloc(sizeof(hw_sys_t));
 
-  hw_sys_init(conf, sys);
+  hw_sys_init(conf, sys, yaml);
   dbg_cmds_init();
   instr_tree_init();
 
@@ -54,6 +55,7 @@ void usage() {
   printf("\t-a [filename]\t\tAssemble file, default output ./a.out\n");
   printf("\t-o [filename]\t\tSpecify assembler output file name\n");
   printf("\t-e [filename]\t\tRun emulator on specified binary file\n");
+  printf("\t-y [filename]\t\tRun emulator on configured YAML system\n");
 
   putchar('\n');
 
@@ -63,7 +65,7 @@ void parse_args(int argc, char** argv) {
 
   int opt;
 
-  while((opt = getopt(argc, argv, "ha:o:e:")) != -1) { 
+  while((opt = getopt(argc, argv, "ha:o:e:y:")) != -1) { 
 
     switch(opt) {
 
@@ -82,6 +84,9 @@ void parse_args(int argc, char** argv) {
         outf = optarg;
 
         break;
+
+      case 'y':
+        yaml = 1;
 
       case 'e':
         emulate = true;

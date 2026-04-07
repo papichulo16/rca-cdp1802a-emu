@@ -34,9 +34,8 @@ typedef struct master {
 cyaml_err_t load_master_yaml(const char *filepath, master_t **out);
 
 void build_slave_list(master_t *master);
-
 void free_master_yaml(master_t *master);
-
 void print_master(const master_t *master);
+void parse_yaml(char* file);
 
 #endif /* YAML_PARSER_H */

@@ -1,8 +1,9 @@
-#include "yaml_parser.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cyaml/cyaml.h>
+
+#include "yaml_parser.h"
 
 static const cyaml_schema_value_t slave_schema;
 
@@ -97,3 +98,23 @@ void print_master(const master_t *master)
     printf("[master] slaves (%u):\n", master->slaves_count);
     print_slaves(master->slaves, 1);
 }
+
+void parse_yaml(char* file)
+{
+
+    master_t *machine = NULL;
+
+    cyaml_err_t err = load_master_yaml(file, &machine);
+
+    if (err != CYAML_OK) {
+        printf("Failed to load YAML: %s\n", cyaml_strerror(err));
+
+        return;
+    }
+
+    build_slave_list(machine);
+    print_master(machine);
+    free_master_yaml(machine);
+
+}
+

@@ -190,7 +190,7 @@ typedef struct {
 
 } hw_sys_t;
 
-void hw_sys_init(char* conf, hw_sys_t* sys);
+void hw_sys_init(char* conf, hw_sys_t* sys, int yaml);
 void hw_sys_run(hw_sys_t* sys);
 void hw_sys_cleanup(hw_sys_t* sys);
 
