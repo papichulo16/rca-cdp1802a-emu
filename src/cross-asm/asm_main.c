@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void asm_main(char* inf, char* outf) {
+void asm_main(char *inf, char *outf) {
 
   // turns out the first arg is the executable name
   char *fileName = inf;
@@ -28,18 +28,10 @@ void asm_main(char* inf, char* outf) {
   // check if file exists before reading each line of the file, otherwise print
   // error
   if (srcptr != NULL) {
-    while (fgets(lineBuf, 255, srcptr)) {
-      printf("%s", lineBuf);
-    }
 
   } else {
     printf("bro where is your source code\n");
   }
-
-  // Currently we need to rewind the file pointer
-  // otherwise literally nothing happens
-  // Wont be necessary once testing code is removed
-  rewind(srcptr);
 
   // build queue
   queue *funnyTokens;
@@ -47,11 +39,8 @@ void asm_main(char* inf, char* outf) {
 
   tokenize(srcptr, funnyTokens);
 
-
-  //where the actual magic happens
+  // where the actual magic happens
   assem(funnyTokens, outf);
-
-
 
   // close the file
   fclose(srcptr);

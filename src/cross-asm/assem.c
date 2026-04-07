@@ -137,6 +137,8 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
 
   int segments = 0;
 
+  printf("Entering Assembler Pass 1\n");
+
   while (curr != NULL && curr->data.type != TOKEN_EOF) {
     currToken = curr->data;
 
@@ -203,7 +205,8 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
           pc = (uint16_t)curr->data.value;
-          printf("ORG statement: PC updated to: %04X\n", pc);
+          printf("ORG statement: PC set to: 0x%x for symbol table purposes\n",
+                 pc);
           segments++;
         } else {
           printf("Something went wrong with the ORG at pc:0x%x, aborting\n",
@@ -333,6 +336,8 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
   // higher
   int blockCount = 0;
 
+  printf("Entering Assembler Pass 2\n");
+
   // because we didnt know how many code blocks we would have until now, we need
   // to use heap memory
   codeBlock *blocks = malloc((memSegments + 1) * sizeof(codeBlock));
@@ -370,7 +375,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
 
           pc = (uint16_t)curr->data.value;
           blocks[blockCount].start = pc;
-          printf("ORG Statement, PC set to 0x%x\n", pc);
+          printf("ORG statement: PC set to 0x%x\n", pc);
         }
         break;
       }

@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
-
-//This is now done in assem.c since im not interested in queueing and dequeuing a bunch lol
+// This is now done in assem.c since im not interested in queueing and dequeuing
+// a bunch lol
 /*
 // Function to actually tell what tokens we have from the enums
 // switch statement actually makes it very intuitive
@@ -57,14 +57,17 @@ void tokenize(FILE *srcptr, queue *result) {
 
   // We should have a queue full of tokens
   //  But if not, this will tell us (until its removed)
+
+  /*
   if (isEmpty(result)) {
     printf("it's empty\n");
   } else {
     printf("it's not empty\n");
   }
+  */
 
-
-  //This is now done in assem.c since im not interested in queueing and dequeueing lol
+  // This is now done in assem.c since im not interested in queueing and
+  // dequeueing lol
   /*
   // List out the tokens and their raw text
   while (!isEmpty(result)) {
