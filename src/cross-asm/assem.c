@@ -143,7 +143,7 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
     // Assume 'currToken' is fetched from your lexer/queue
     switch (currToken.type) {
     case TOKEN_LABEL:
-      printf("label processing: %s\n", currToken.text);
+      // printf("label processing: %s\n", currToken.text);
 
       if (findLabel(*symbolTable, currToken.text) != NULL) {
         printf("Duplicate label definition '%s'\n", currToken.text);
@@ -171,18 +171,16 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
         if (curr != NULL && curr->data.type == TOKEN_NUMBER) {
           // process EQU directive
           newLabel.address = (uint16_t)curr->data.value;
-          printf("EQU directive: %s set to 0x%04X\n", newLabel.name,
-                 newLabel.address);
+          printf("EQU directive at pc:0x%x, %s set to 0x%04X\n", pc,
+                 newLabel.name, newLabel.address);
 
           while (curr->next != NULL && curr->next->data.type != TOKEN_EOL) {
             curr = curr->next;
           }
 
         } else {
-          printf(
-              "Expected number after EQU, moving on but things will break\n");
-          newLabel.address = 0; // that isn't supposed to happen and probably
-                                // will break things if it does
+          printf("Expected number after EQU, aborting\n");
+          exit(1);
         }
       } else {
         // Standard label, bind to current PC
@@ -199,16 +197,18 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
       // Get expected operands, calculate PC increment, and generate code (Pass
       // 2)
 
-      printf("mnemonic processing: %s\n", currToken.text);
+      // printf("mnemonic processing: %s\n", currToken.text);
 
       if (strcasecmp(currToken.text, "ORG") == 0) {
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
           pc = (uint16_t)curr->data.value;
-          printf("PC updated to: %04X\n", pc);
+          printf("ORG statement: PC updated to: %04X\n", pc);
           segments++;
         } else {
-          printf("something went wrong with the ORG\n");
+          printf("Something went wrong with the ORG at pc:0x%x, aborting\n",
+                 pc);
+          exit(1);
         }
         break;
       }
@@ -243,7 +243,8 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
 
       } else {
         // Handle error: Unknown mnemonic
-        printf("bad mnemonic or something I cant handle yet\n");
+        printf("Bad mnemonic, aborting\n");
+        exit(1);
       }
 
       // obliterate operands, we can deal with that later
@@ -262,7 +263,7 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
       // printf("comment, time to skip\n");
       while (curr->next != NULL && (curr->next->data).type != TOKEN_EOL &&
              (curr->next->data).type != TOKEN_EOF) {
-        printf("skip\n");
+        // printf("skip\n");
         curr = curr->next;
         currToken = curr->data;
       }
@@ -270,7 +271,7 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
       break;
 
     case TOKEN_EOL:
-      printf("eol token\n");
+      // printf("eol token\n");
       break;
 
     case TOKEN_EOF:
@@ -280,20 +281,20 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
     case TOKEN_UNKNOWN:
     case TOKEN_ERROR:
       // Throw a syntax error, print line number, and halt assembly.
-      printf("Unexpected token '%s', killing\n", currToken.text);
+      printf("Unexpected token '%s', aborting\n", currToken.text);
       exit(1);
       break;
 
     case TOKEN_REGISTER:
-      printf("register\n");
+      // printf("register\n");
       break;
 
     case TOKEN_COMMA:
-      printf("comma\n");
+      // printf("comma\n");
       break;
 
     case TOKEN_NUMBER:
-      printf("number\n");
+      // printf("number\n");
       break;
 
     default:
@@ -305,7 +306,7 @@ int pass1(tokenNode **myNode, labelNode **symbolTable) {
     curr = curr->next;
   }
 
-  printLabels(*symbolTable);
+  // printLabels(*symbolTable);
   printf("label count: %d, mnemonic count: %d\n", label_count, mnemonic_count);
   printf("final pc: %x\n", pc);
 
@@ -356,7 +357,6 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
     case TOKEN_MNEMONIC:
       // ORG directive
       if (strcasecmp(currToken.text, "ORG") == 0) {
-        printf("ORG directive\n");
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
 
@@ -370,7 +370,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
 
           pc = (uint16_t)curr->data.value;
           blocks[blockCount].start = pc;
-          printf("Set to 0x%x\n", pc);
+          printf("ORG Statement, PC set to 0x%x\n", pc);
         }
         break;
       }
@@ -380,7 +380,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
       // BUT the directive itself is handled as a mnemonic so we need to skip
       // over it
       if (strcasecmp(currToken.text, "EQU") == 0) {
-        printf("EQU directive (do nothing useful except skip ahead)\n");
+        // printf("EQU directive (do nothing useful except skip ahead)\n");
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
         }
@@ -391,7 +391,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
       // works with just a byte or the lower 8 bits of a label so far
       // in the future maybe we will do strings
       if (strcasecmp(currToken.text, "DB") == 0) {
-        printf("DB directive\n");
+        printf("DB directive: ");
         while (curr->next != NULL && curr->next->data.type != TOKEN_EOL &&
                curr->next->data.type != TOKEN_EOF &&
                curr->next->data.type != TOKEN_COMMENT) {
@@ -403,6 +403,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
             }
 
             binBuf[pc] = (uint8_t)(curr->data.value & 0xFF);
+            printf("Data at PC:0x%x set to: 0x%x", pc, curr->data.value);
             pc++;
 
             if (pc > maxPc) {
@@ -420,8 +421,12 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
 
             if (myLabel) {
               binBuf[pc] = (uint8_t)(myLabel->address & 0xFF);
+              printf("Data at PC:0x%x set to: 0x%x", pc, curr->data.value);
+
             } else {
-              binBuf[pc] = 0x00;
+              printf(
+                  "Could not find label referenced by DB statement, aborting");
+              exit(1);
             }
             pc++;
 
@@ -436,7 +441,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
       // Now that we have dealt with the other stuff, we either have an
       // instruction or some garbage
       InstructionInfo *info = findInstr(currToken.text);
-      printf("%s", currToken.text);
+      // printf("%s", currToken.text);
       if (info != NULL) {
         if (pc < minPc)
           minPc = pc;
@@ -497,8 +502,12 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
             if (myLabel) {
               binBuf[pc] = (uint8_t)(myLabel->address & 0xFF);
             } else {
-              printf("Bad label, things will go wrong. 0x00 at 0x%x\n", pc);
-              binBuf[pc] = 0x00;
+              // printf("Bad label, things will go wrong. 0x00 at 0x%x\n", pc);
+              // binBuf[pc] = 0x00;
+              printf("Bad label %s when trying to process mnemonic at PC:0x%x, "
+                     "aborting",
+                     curr->data.text, pc);
+              exit(1);
             }
             pc++;
           }
@@ -518,6 +527,13 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
             label *myLabel = findLabel(*symbolTable, curr->data.text);
             if (myLabel) {
               addr = myLabel->address;
+            } else {
+              // printf("Bad label, things will go wrong. 0x00 at 0x%x\n", pc);
+              // binBuf[pc] = 0x00;
+              printf("Bad label %s when trying to process mnemonic at PC:0x%x, "
+                     "aborting",
+                     curr->data.text, pc);
+              exit(1);
             }
           }
 
@@ -632,23 +648,27 @@ void assem(queue *tokens, char *outf) {
   tokenNode *linkedTokens = NULL;
   populate(tokens, &linkedTokens);
 
-  // print tokens (i mean this can be commented out but for now its debug
-  printTokens(&linkedTokens);
+  // print tokens (debug)
+  // printTokens(&linkedTokens);
 
   // We should have a linked list full of tokens
   //  But if not, this will tell us (until its removed)
+  //
+  // This should no longer be necessary
+  /*
   if (linkedTokens == NULL) {
     printf("Somehow we got to assembling, but the queue is empty\n");
     return;
   } else {
     printf("The queue is not empty, we can move on\n");
   }
+  */
 
   // Initialize symbol table;
   labelNode *symbolTable = NULL;
 
-  printf("Did absolutely nothing yet but I am making it look like I did "
-         "something\n");
+  // printf("Did absolutely nothing yet but I am making it look like I did
+  // something\n");
 
   // figure out symbol addresses, etc all that good stuff
   int memorySegs = pass1(&linkedTokens, &symbolTable);
