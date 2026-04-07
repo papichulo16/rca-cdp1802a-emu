@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 const char *get_token_name(TokenType type) {
@@ -126,13 +127,15 @@ label *findLabel(labelNode *myNode, char *myLabel) {
   return NULL;
 }
 
-void pass1(tokenNode **myNode, labelNode **symbolTable) {
+int pass1(tokenNode **myNode, labelNode **symbolTable) {
   uint16_t pc = 0x0000;
   tokenNode *curr = *myNode;
   Token currToken = curr->data;
 
   int mnemonic_count = 0;
   int label_count = 0;
+
+  int segments = 0;
 
   while (curr != NULL && curr->data.type != TOKEN_EOF) {
     currToken = curr->data;
@@ -203,6 +206,7 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
           curr = curr->next;
           pc = (uint16_t)curr->data.value;
           printf("PC updated to: %04X\n", pc);
+          segments++;
         } else {
           printf("something went wrong with the ORG\n");
         }
@@ -277,7 +281,7 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
     case TOKEN_ERROR:
       // Throw a syntax error, print line number, and halt assembly.
       printf("Unexpected token '%s', killing\n", currToken.text);
-      exit(-1);
+      exit(1);
       break;
 
     case TOKEN_REGISTER:
@@ -304,9 +308,12 @@ void pass1(tokenNode **myNode, labelNode **symbolTable) {
   printLabels(*symbolTable);
   printf("label count: %d, mnemonic count: %d\n", label_count, mnemonic_count);
   printf("final pc: %x\n", pc);
+
+  return segments;
 }
 
-void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
+void pass2(tokenNode **myNode, labelNode **symbolTable, char *outf,
+           int memSegments) {
   // here we actually build the binary
   // we use an output buffer to make this easy
   // The symbol table we built earlier is also used in this process to translate
@@ -317,6 +324,24 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
   uint16_t maxPc = 0x0000;
 
   uint8_t binBuf[65536];
+
+  // if this stays 0 alongside memsegments, we dont chunk up the program
+  // we still write the metadata of how many segments though, which is an extra
+  // 4 bytes to the beginning of the binary
+  // The emulator sees the number and will know what to do whether it is 0 or
+  // higher
+  int blockCount = 0;
+
+  // because we didnt know how many code blocks we would have until now, we need
+  // to use heap memory
+  codeBlock *blocks = malloc((memSegments + 1) * sizeof(codeBlock));
+  if (blocks == NULL) {
+    printf("Failed to allocate code block array, aborting.\n");
+    exit(1);
+  }
+
+  // start a code block
+  blocks[blockCount].start = pc;
 
   tokenNode *curr = *myNode;
   Token currToken;
@@ -334,7 +359,17 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
         printf("ORG directive\n");
         if (curr->next != NULL && curr->next->data.type == TOKEN_NUMBER) {
           curr = curr->next;
+
+          // end the current block with the value of the PC
+          // do this before the PC changes as a result of the ORG
+          // then, move onto the next block and set the start
+          blocks[blockCount].end = pc;
+          if (pc > blocks[blockCount].start) {
+            blockCount++;
+          }
+
           pc = (uint16_t)curr->data.value;
+          blocks[blockCount].start = pc;
           printf("Set to 0x%x\n", pc);
         }
         break;
@@ -504,7 +539,7 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
       } else {
         printf("Unknown mnemonic '%s' at PC %04X, aborting\n", currToken.text,
                pc);
-        exit(-1);
+        exit(1);
       }
 
       // obliterate the rest of the garbage
@@ -531,9 +566,16 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
     curr = curr->next;
   }
 
+  // the last block will have the last value of the PC
+  blocks[blockCount].end = pc;
+  if (pc > blocks[blockCount].start) {
+    blockCount++;
+  }
+
   if (maxPc <= minPc) {
     printf("Did you actually write a program? Nothing written.\n");
-    return;
+    free(blocks);
+    exit(1);
   }
 
   // Handle the actual file output
@@ -543,16 +585,48 @@ void pass2(tokenNode **myNode, labelNode **symbolTable, char* outf) {
   // that were actually used
   if (binary != NULL) {
 
-    fwrite(&binBuf[minPc], 1, maxPc - minPc, binary);
+    // how many memory segment structs will we write?
+    int outSegmentCount;
+    if (blockCount > 0) {
+      outSegmentCount = blockCount;
+    } else {
+      outSegmentCount = 0;
+    }
+
+    fwrite(&outSegmentCount, sizeof(int), 1, binary);
+
+    // write the memory segment info structs to the file
+    if (outSegmentCount > 0) {
+      memorySegment *memInfo = malloc(blockCount * sizeof(memorySegment));
+
+      uint16_t currOffset = 0x0;
+      for (int i = 0; i < blockCount; i++) {
+        memInfo[i].ORG = blocks[i].start;
+        memInfo[i].OFF = currOffset;
+        currOffset += (blocks[i].end - blocks[i].start);
+      }
+
+      fwrite(memInfo, sizeof(memorySegment), blockCount, binary);
+      free(memInfo);
+    }
+
+    // now write the actual program code blocks
+    int totalBytes = 0;
+    for (int i = 0; i < blockCount; i++) {
+      uint16_t size = blocks[i].end - blocks[i].start;
+      fwrite(&binBuf[blocks[i].start], 1, size, binary);
+      totalBytes += size;
+    }
+
     fclose(binary);
-    printf("Wrote %d bytes to output.bin\n", maxPc - minPc);
+    printf("Wrote %d bytes of code to %s\n", totalBytes, outf);
   } else {
     printf("The output binary file could not be created. Aborting.\n");
-    exit(-1);
+    exit(1);
   }
 }
 
-void assem(queue *tokens, char* outf) {
+void assem(queue *tokens, char *outf) {
 
   // move what is in the queue into the linked list
   tokenNode *linkedTokens = NULL;
@@ -577,11 +651,11 @@ void assem(queue *tokens, char* outf) {
          "something\n");
 
   // figure out symbol addresses, etc all that good stuff
-  pass1(&linkedTokens, &symbolTable);
+  int memorySegs = pass1(&linkedTokens, &symbolTable);
 
   // actually figure out putting together the binary piece
   // probably need to set up output buffer to a file
-  pass2(&linkedTokens, &symbolTable, outf);
+  pass2(&linkedTokens, &symbolTable, outf, memorySegs);
 
   return;
 }
