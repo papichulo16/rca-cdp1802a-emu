@@ -1,19 +1,19 @@
-#include "../intf/token.h"
+#include "token.h"
 
-#include "../intf/tokenQueue.h"
+#include "tokenQueue.h"
 // specific
 #include "scanner.h"
 
-#include "../intf/lexer.h"
+#include "lexer.h"
 
-#include "../intf/asm.h"
+#include "asm.h"
 
-#include "../intf/assem.h"
+#include "assem.h"
 
 #include <stdio.h>
 #include <string.h>
 
-void asm_main(char* inf) {
+void asm_main(char* inf, char* outf) {
 
   // turns out the first arg is the executable name
   char *fileName = inf;
@@ -49,7 +49,7 @@ void asm_main(char* inf) {
 
 
   //where the actual magic happens
-  assem(funnyTokens);
+  assem(funnyTokens, outf);
 
 
 

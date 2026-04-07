@@ -3,6 +3,7 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "dbg.h"
 #include "utils.h"
 
 void cpu_w_bus_pins(cdp1802a_chip_t* c, uint8_t v) {
@@ -23,11 +24,21 @@ uint8_t cpu_r_ma_pins(cdp1802a_chip_t* c) {
   return (uint8_t) ((c->pinout & (0xffULL << PIN_MA0)) >> PIN_MA0);
 }
 
+void int_action(cdp1802a_chip_t* c) {
+
+  c->state.mc = RDY;
+
+  c->regs.t = c->regs.xp;
+  c->regs.xp = 0x21;
+}
+
 void handle_mc_end(cdp1802a_chip_t* c) {
   uint8_t status = (uint8_t) ((c->pinout & (3ULL << PIN_SC0)) >> PIN_SC0);
 
   c->state.t_state = 0;
   c->state.mc = NON_MEM;
+
+  ((dbg_po_t *) c->po_log)->bytes++;
 
   switch (status) {
 
@@ -50,6 +61,8 @@ void handle_mc_end(cdp1802a_chip_t* c) {
 
     // INT
     case 3:
+      int_action(c);
+
       break;
 
   }
@@ -165,20 +178,47 @@ void opc_fetch (cdp1802a_chip_t* c) {
 
   // OPF
   c->pinout = (c->pinout & ~(3 << PIN_SC0));
-  c->addr = c->regs.sp_r[c->regs.xp & 0xf];
 
+  c->addr = c->regs.sp_r[c->regs.xp & 0xf];
   mem_read(c);
 
 }
 
+void irq_state (cdp1802a_chip_t* c) {
+
+  c->state.mc = NON_MEM;
+
+  // INT 
+  c->pinout &= 3 << PIN_SC0;
+
+}
+
+void irq(cdp1802a_chip_t* c) {
+
+  c->idle = 0;
+  c->irq = 1;
+
+  c->regs.io = 0;
+
+  set_bit(&c->pinout, PIN_INT);
+}
+
+
 void cpu_handle_state(cdp1802a_chip_t* c) {
+
+  if (!((c->pinout & (1ULL << PIN_INT)) >> PIN_INT) && c->regs.io)
+    irq(c);
 
   if (c->idle)
     return;
 
   switch (c->state.mc) {
     case RDY:
-      opc_fetch(c);
+
+      if (c->irq)
+        irq_state(c);
+      else
+        opc_fetch(c);
 
       break;
 

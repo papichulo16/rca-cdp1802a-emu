@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "dbg.h"
 #include "sysbus.h"
@@ -134,6 +136,17 @@ void dbg_add_cmd(char* cmd, void* entry) {
   cmds_head = obj;
 }
 
+void handle_sigint(int sig) {
+
+  if (stop)
+    return;
+
+  const char *msg = "\nCaught Ctrl+C. Breaking...\n";
+  write(STDOUT_FILENO, msg, strlen(msg));
+
+  stop = 1;
+}
+
 void dbg_cmds_init() {
 
   dbg_add_cmd("help", dbg_help);
@@ -149,6 +162,15 @@ void dbg_cmds_init() {
   dbg_add_cmd("readi", dbg_read_mem_instr);
 
   dbg_add_cmd("cpu", dbg_cpu);
+  dbg_add_cmd("tim_diag", dbg_print_mc);
+
+  struct sigaction sa;
+  sa.sa_handler = handle_sigint;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART; 
+
+  sigaction(SIGINT, &sa, NULL);
+
 }
 
 void dbg_cmds_clean() {
@@ -200,7 +222,7 @@ dbg_state_enum dbg_cmd_dispatch(cdp1802a_chip_t* c, char* cmd) {
   }
 
   set_red(); 
-  printf("Unsupported command %s!\n\n", cmd);
+  printf("Unsupported command %s!\n", cmd);
   reset_color();
 
   return STATE_DBG;

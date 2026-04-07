@@ -153,8 +153,20 @@ typedef struct {
 } cpu_exec_sm_t;
 
 typedef struct {
+  bool active;
+
+  mach_cycle_t mc;
+  uint16_t addr;
+  uint8_t data_bus;
+
+  cpu_exec_sm_t exec;
+
+} cpu_queue_mc_t;
+
+typedef struct {
 
   bool idle;
+  bool irq;
   uint64_t pinout;
   uint16_t addr;
   uint8_t data_bus;
@@ -163,11 +175,13 @@ typedef struct {
 
   cpu_state_t state;
   cpu_exec_sm_t exec;
+  cpu_queue_mc_t queue;
 
   hw_sysbus_t* sysbus;
   
   void* next;
   void* bps;
+  void* po_log;
 } cdp1802a_chip_t;
 
 typedef struct {

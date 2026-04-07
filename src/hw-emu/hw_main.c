@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -50,6 +51,9 @@ void hw_cpu_init(cdp1802a_chip_t* chip) {
   hw_sysbus_start(chip);
   chip->next = NULL;
   chip->bps = NULL;
+  chip->po_log = malloc(sizeof(dbg_po_t));
+
+  memset(chip->po_log, '\0', sizeof(dbg_po_t));
 
 }
 
@@ -105,12 +109,14 @@ void hw_sys_run(hw_sys_t* sys) {
 
     cdp1802a_chip_t* chip = sys->head;
 
-    if (chip->state.mc == RDY) {
+    if (chip->state.mc == RDY || chip->idle) {
 
-      dbg_state_enum ret = dbg_ask(sys->head);
+      dbg_state_enum ret = dbg_ask(chip);
 
       while (ret == STATE_DBG)
-        ret = dbg_ask(sys->head);
+        ret = dbg_ask(chip);
+
+      dbg_clr_po_log(chip);
 
       if (ret == STATE_QUIT)
         return;
@@ -119,6 +125,9 @@ void hw_sys_run(hw_sys_t* sys) {
     while (chip != NULL) {
 
       toggle_clock(chip);
+
+      if (chip == sys->head)
+        dbg_log_po(chip);
 
       chip = chip->next;
     }

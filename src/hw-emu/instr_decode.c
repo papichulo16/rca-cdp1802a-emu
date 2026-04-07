@@ -10,6 +10,13 @@ void exec_mem_trans(cdp1802a_chip_t* c, void* dest, void* src) {
       c->exec.trans_dest = dest;
 }
 
+void q_exec_mem_trans(cdp1802a_chip_t* c, void* dest, void* src) {
+      c->queue.exec.mem_trans = true;
+      c->queue.exec.trans_src = src;
+      c->queue.exec.trans_dest = dest;
+}
+
+
 void exec_alu_oper(cdp1802a_chip_t* c, alu_oper_t oper) {
       c->exec.alu = true;
       c->exec.alu_oper = oper;
@@ -53,11 +60,98 @@ void i_reg_2(cdp1802a_chip_t* c) {
 void i_reg_3(cdp1802a_chip_t* c) {
 
   // short branch
-  // right now i havent added conditions so it will always be true
-  bool taken = true;
+  bool taken = false;
 
-  if (!taken) 
+  switch (c->regs.in & 0xf) {
+
+    case 0:
+      taken = true;
+
+      break;
+
+    case 1:
+      taken = ((c->pinout & (1ULL << PIN_Q)) >> PIN_Q);
+
+      break;
+
+    case 2:
+      taken = c->regs.d == 0;
+      
+      break;
+
+    case 3:
+      taken = c->regs.df;
+
+      break;
+
+    case 4:
+      taken = ((c->pinout & (1ULL << PIN_EF1)) >> PIN_EF1);
+
+      break;
+
+    case 5:
+      taken = ((c->pinout & (1ULL << PIN_EF2)) >> PIN_EF2);
+
+      break;
+
+    case 6:
+      taken = ((c->pinout & (1ULL << PIN_EF3)) >> PIN_EF3);
+
+      break;
+
+    case 7:
+      taken = ((c->pinout & (1ULL << PIN_EF4)) >> PIN_EF4);
+
+      break;
+
+    case 8:
+      taken = false;
+      
+      break;
+
+    case 9:
+      taken = !((c->pinout & (1ULL << PIN_Q)) >> PIN_Q);
+
+      break;
+
+    case 0xa:
+      taken = c->regs.d != 0;
+
+      break;
+      
+    case 0xb:
+      taken = !c->regs.df;
+
+      break;
+
+    case 0xc:
+      taken = !((c->pinout & (1ULL << PIN_EF1)) >> PIN_EF1);
+
+      break;
+
+    case 0xd:
+      taken = !((c->pinout & (1ULL << PIN_EF2)) >> PIN_EF2);
+
+      break;
+
+    case 0xe:
+      taken = !((c->pinout & (1ULL << PIN_EF3)) >> PIN_EF3);
+
+      break;
+
+    case 0xf:
+      taken = !((c->pinout & (1ULL << PIN_EF4)) >> PIN_EF4);
+
+      break;
+  }
+
+  if (!taken) {
+
+    c->state.mc = NON_MEM;
+    c->regs.sp_r[c->regs.xp & 0xf]++;
+
     return;
+  }
 
   exec_mem_trans(c, &c->regs.sp_r[c->regs.xp & 0xf], &c->data_bus);
 
@@ -127,15 +221,30 @@ void i_reg_6(cdp1802a_chip_t* c) {
 void i_reg_7(cdp1802a_chip_t* c) {
 
   switch (c->regs.in & 0xf) {
-    // ret
+    // ret from ISR
     case 0:
+      exec_mem_trans(c, &c->regs.xp, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
+      c->regs.io = true;
 
       break;
 
     // dis 
     // returns from ISR as well
     case 1:
-      //c->regs.io = false;
+      exec_mem_trans(c, &c->regs.xp, &c->data_bus);
+
+      c->state.mc = MRD;
+      c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
+
+      c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
+
+      c->regs.io = false;
 
       break;
 
@@ -203,21 +312,22 @@ void i_reg_7(cdp1802a_chip_t* c) {
 
     // sav 
     case 8:
-      c->data_bus = c->regs.xp;
 
       c->state.mc = MWR;
+      c->data_bus = c->regs.t;
       c->addr = c->regs.sp_r[(c->regs.xp & 0xf0) >> 4];
 
       break;
 
     // mark 
     case 9:
-      c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.xp & 0x0f) << 4);
-
-      c->data_bus = c->regs.xp;
+      c->regs.t = c->regs.xp;
 
       c->state.mc = MWR;
+      c->data_bus = c->regs.xp;
       c->addr = c->regs.sp_r[2];
+
+      c->regs.xp = (c->regs.xp & 0x0f) | ((c->regs.xp & 0x0f) << 4);
 
       c->regs.sp_r[2]--;
 
@@ -310,6 +420,8 @@ void i_reg_b(cdp1802a_chip_t* c) {
 }
 
 void i_reg_c(cdp1802a_chip_t* c) {
+  
+  bool b_taken = false;
 
   switch (c->regs.in & 0xf) {
 
@@ -317,15 +429,45 @@ void i_reg_c(cdp1802a_chip_t* c) {
     case 4:
       break;
 
-    // long branch
+
     case 0:
+      b_taken = true;
+
+      break;
+
     case 1:
+      b_taken = ((c->pinout & (1ULL << PIN_Q)) >> PIN_Q);
+
+      break;
+
     case 2:
+      b_taken = c->regs.d == 0;
+      
+      break;
+
     case 3:
+      b_taken = c->regs.df;
+
+      break;
+
     case 8:
+      b_taken = false;
+      
+      break;
+
     case 9:
+      b_taken = !((c->pinout & (1ULL << PIN_Q)) >> PIN_Q);
+
+      break;
+
     case 0xa:
+      b_taken = c->regs.d != 0;
+
+      break;
+      
     case 0xb:
+      b_taken = !c->regs.df;
+
       break;
 
     // long skip
@@ -339,6 +481,28 @@ void i_reg_c(cdp1802a_chip_t* c) {
       break;
 
   }
+
+  if (!b_taken) {
+
+    c->state.mc = NON_MEM;
+    c->regs.sp_r[c->regs.xp & 0xf]++;
+    c->regs.sp_r[c->regs.xp & 0xf]++;
+
+    return;
+  }
+
+  exec_mem_trans(c, &c->regs.sp_r[c->regs.xp & 0xf] + 1, &c->data_bus);
+
+  c->state.mc = MRD;
+  c->addr = c->regs.sp_r[c->regs.xp & 0xf];
+  c->regs.sp_r[c->regs.xp & 0xf]++;
+
+  q_exec_mem_trans(c, &c->regs.sp_r[c->regs.xp & 0xf], &c->data_bus);
+
+  c->queue.active = true;
+  c->queue.mc = MRD;
+  c->queue.addr = c->regs.sp_r[c->regs.xp & 0xf];
+  c->regs.sp_r[c->regs.xp & 0xf]++;
 
 }
 

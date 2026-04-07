@@ -1,11 +1,11 @@
 
-#include "../intf/token.h"
+#include "token.h"
 
-#include "../intf/tokenQueue.h"
+#include "tokenQueue.h"
 
-#include "../intf/lexer.h"
+#include "lexer.h"
 
-#include "scanner.h"
+#include "./scanner.h"
 
 #include <stdio.h>
 #include <string.h>
