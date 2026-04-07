@@ -1,5 +1,5 @@
 CC      := gcc
-CFLAGS  := -Wall -Wextra -O2 -Isrc/intf -g
+CFLAGS  := -Wall -Wextra -O2 -Isrc/intf -g 
 SRC_DIR := src
 BUILD_DIR := build/obj
 INTF_DIR := src/intf
@@ -29,7 +29,7 @@ $(FLEX_OBJ): $(FLEX_OUT) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(FLEX_OUT) -o $@
 
 $(TARGET): $(OBJS) $(FLEX_OBJ)
-	$(CC) $(OBJS) $(FLEX_OBJ) -o $@
+	$(CC) $(OBJS) $(FLEX_OBJ) -o $@ -lcyaml -lyaml
 	rm -f $(FLEX_OUT) $(FLEX_HDR)
 
 $(BUILD_DIR)/%.o: | $(BUILD_DIR)

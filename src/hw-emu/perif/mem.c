@@ -128,7 +128,7 @@ int perif_mem_init(hw_sysbus_t* sysb, uint16_t addr, uint8_t addr_lines) {
   return id;
 }
 
-void perif_mem_memcpy(int id, void* src, size_t len) {
+void perif_mem_memcpy(int id, void* src, size_t len, size_t off) {
 
   perif_mem_t* mem = perif_mem_find(id);
 
@@ -138,13 +138,13 @@ void perif_mem_memcpy(int id, void* src, size_t len) {
     exit(-1);
   }
 
-  if (len > mem->max + 1) {
+  if (len + off > mem->max + 1) {
     printf("[mem.c] WARNING: target mem memcpy too large for perif\n");
     memcpy(mem->data, src, mem->max + 1);
 
     return;
   }
 
-  memcpy(mem->data, src, len);
+  memcpy(mem->data + off, src, len);
 }
 

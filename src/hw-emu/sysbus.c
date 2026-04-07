@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sysbus.h"
 #include "utils.h"
@@ -46,6 +47,8 @@ hw_sysbus_t* create_sysbus_obj(cdp1802a_chip_t* c, uint8_t addr_decode_pins) {
   s->cpu = c;
   s->peripherals = malloc(sizeof(hw_peripheral_t*) * power(2, addr_decode_pins));
   s->decode_pin_count = addr_decode_pins;
+
+  memset(s->peripherals, '\0', sizeof(hw_peripheral_t*) * power(2, addr_decode_pins));
   
   return s;
 }

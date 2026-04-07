@@ -14,6 +14,7 @@ char* binary;
 char* outf = "a.out";
 char* inf;
 char* conf;
+int yaml = 0;
 bool assemble = false;
 bool emulate = false;
 
@@ -28,14 +29,22 @@ void emulator(){
   printf("Starting emulator...\n");
   hw_sys_t* sys = malloc(sizeof(hw_sys_t));
 
-  hw_sys_init(conf, sys);
+  hw_sys_init(conf, sys, yaml);
   dbg_cmds_init();
   instr_tree_init();
 
   printf("System config initialized, running emulator...\n\n");
+
+  if (!sys->head) {
+
+    printf("[main.c] ERROR: no CPU initialized, exiting.\n");
+    
+    exit(-1);
+  }
+
   hw_sys_run(sys);
 
-  printf("Exiting...\n\n");
+  printf("Exiting...\n");
   hw_sys_cleanup(sys);
   dbg_cmds_clean();
   free(sys);
@@ -44,7 +53,7 @@ void emulator(){
 
 void usage() {
 
-  printf("This is a clock-cycle accurate hardware emulator and cross-assembler for the legacy RCA CDP1802a 8-bit microprocessor, made from scratch.\n\nUtilizing an independent CPU and system bus design, this emulator is able to do systems of systems tasks (as long as it is multiple RCA 1802 chips communicating with each other since that is the only MPU implemented lol).\n\nThis project was mainly made for educational purposes since it forced us to strictly adhere to a datasheet and follow along to its architecture, write an independent and modularized design for having systems of systems, and use tools like flex and bison.\n\n");
+  printf("This is a clock-cycle accurate hardware emulator and cross-assembler for the legacy RCA CDP1802a 8-bit microprocessor, made from scratch. The goal of this project is to not only emulate a very unique and old chip architecture, but also allow the user to have the ability to design and create embedded systems with multiple moving parts and CPUs that communicate with each other.\n\n");
   printf("Authors: Luis Abraham, Dominick Morales, Dylin Irons, Giovanni Williams.\n\n");
 
   printf("Usage: %s [options]\n\n", binary);
@@ -54,6 +63,7 @@ void usage() {
   printf("\t-a [filename]\t\tAssemble file, default output ./a.out\n");
   printf("\t-o [filename]\t\tSpecify assembler output file name\n");
   printf("\t-e [filename]\t\tRun emulator on specified binary file\n");
+  printf("\t-y [filename]\t\tRun emulator on configured YAML system\n");
 
   putchar('\n');
 
@@ -63,7 +73,7 @@ void parse_args(int argc, char** argv) {
 
   int opt;
 
-  while((opt = getopt(argc, argv, "ha:o:e:")) != -1) { 
+  while((opt = getopt(argc, argv, "ha:o:e:y:")) != -1) { 
 
     switch(opt) {
 
@@ -82,6 +92,9 @@ void parse_args(int argc, char** argv) {
         outf = optarg;
 
         break;
+
+      case 'y':
+        yaml = 1;
 
       case 'e':
         emulate = true;
