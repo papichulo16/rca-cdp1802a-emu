@@ -50,4 +50,5 @@ dbg_state_enum dbg_read_mem_printb(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_read_mem_printw(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_read_mem_instr(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_print_mc(cdp1802a_chip_t* c, char* args);
+dbg_state_enum dbg_do_int(cdp1802a_chip_t* c, char* args);
 

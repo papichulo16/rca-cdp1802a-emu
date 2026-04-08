@@ -38,6 +38,7 @@ void hw_pin_bar_init(cdp1802a_chip_t* c) {
   set_bit(&c->pinout, PIN_EF3);
   set_bit(&c->pinout, PIN_EF4);
 
+  c->regs.io = 1;
 }
 
 void hw_sysbus_start(cdp1802a_chip_t* c, int decode_pins) {

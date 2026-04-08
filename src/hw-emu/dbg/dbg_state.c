@@ -106,7 +106,7 @@ dbg_state_enum dbg_read_mem_printb(cdp1802a_chip_t* c, char* args) {
   if (!args) {
 
     set_red();
-    printf("Usage: readw <addr>\n");
+    printf("Usage: readb <addr>\n");
     reset_color();
 
     return STATE_DBG;

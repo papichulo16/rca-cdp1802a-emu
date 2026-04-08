@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "cpu.h"
 #include "dbg.h"
 #include "sysbus.h"
 #include "utils.h"
@@ -25,6 +26,33 @@ void print_regw(char* reg, uint16_t val) {
   printf("0x%04x\t\t", val);
   reset_color();
 
+}
+
+dbg_state_enum dbg_do_int(cdp1802a_chip_t* c, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: int <1-4>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
+
+  int i = atoi(args);
+
+  if (i < 1 || i > 4) {
+
+    set_red();
+    printf("Usage: int <1-4>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
+
+  cpu_fire_int(c, i);
+
+  return STATE_DBG;
 }
 
 // TODO: implement inspecting specific registers

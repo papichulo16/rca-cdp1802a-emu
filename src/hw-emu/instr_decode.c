@@ -3,6 +3,7 @@
 
 #include "hw.h"
 #include "cpu.h"
+#include "utils.h"
 
 void exec_mem_trans(cdp1802a_chip_t* c, void* dest, void* src) {
       c->exec.mem_trans = true;
@@ -231,6 +232,11 @@ void i_reg_7(cdp1802a_chip_t* c) {
       c->regs.sp_r[(c->regs.xp & 0xf0) >> 4]++;
 
       c->regs.io = true;
+
+      set_bit(&c->pinout, PIN_EF1);
+      set_bit(&c->pinout, PIN_EF2);
+      set_bit(&c->pinout, PIN_EF3);
+      set_bit(&c->pinout, PIN_EF4);
 
       break;
 

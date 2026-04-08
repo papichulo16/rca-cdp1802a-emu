@@ -156,6 +156,7 @@ void dbg_cmds_init() {
   dbg_add_cmd("cont", dbg_cont);
   dbg_add_cmd("clear", dbg_clear);
 
+  dbg_add_cmd("int", dbg_do_int);
   dbg_add_cmd("setb", dbg_write_mem_setb);
   dbg_add_cmd("readb", dbg_read_mem_printb);
   dbg_add_cmd("readw", dbg_read_mem_printw);
@@ -260,9 +261,26 @@ void check_breakpoints(cdp1802a_chip_t* c, uint16_t pc) {
   }
 }
 
+void print_q_pin_state(cdp1802a_chip_t* c) {
+
+  printf("\033[H\033[J"); // clear screen
+  printf("CPUs Q pin states:\n");
+
+  cdp1802a_chip_t* cur = c;
+
+  while (cur) {
+
+    printf("%s: ", cur->name ? cur->name : "unk_cpu");  
+    printf("LED %s\n", ((cur->pinout & (1UL << PIN_Q)) >> PIN_Q) ? "\033[32m● ON\033[0m" : "\033[31m● OFF\033[0m");
+
+    cur = cur->next;
+  }
+
+  putchar('\n');
+}
+
 dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
 
-  // TODO: code to check for breakpoint
   uint16_t pc = c->regs.sp_r[c->regs.xp & 0xf];
 
   check_breakpoints(c, pc);
@@ -271,6 +289,8 @@ dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
     return STATE_CONT;
 
   if (pc != last_pc) {
+
+    print_q_pin_state(c);
 
     print_cur_state(c, pc);
     last_pc = pc;

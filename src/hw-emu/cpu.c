@@ -24,6 +24,35 @@ uint8_t cpu_r_ma_pins(cdp1802a_chip_t* c) {
   return (uint8_t) ((c->pinout & (0xffULL << PIN_MA0)) >> PIN_MA0);
 }
 
+void cpu_fire_int(cdp1802a_chip_t* c, int i) {
+
+  
+  clr_bit(&c->pinout, PIN_INT);
+
+  switch(i) {
+  
+    case 1:
+      clr_bit(&c->pinout, PIN_EF1);
+      break;
+
+    case 2:
+      clr_bit(&c->pinout, PIN_EF2);
+      break;
+
+    case 3:
+      clr_bit(&c->pinout, PIN_EF3);
+      break;
+
+    case 4:
+      clr_bit(&c->pinout, PIN_EF4);
+      break;
+
+    default:
+      set_bit(&c->pinout, PIN_INT);
+      break;
+  }
+}
+
 void int_action(cdp1802a_chip_t* c) {
 
   c->state.mc = RDY;
@@ -189,7 +218,7 @@ void irq_state (cdp1802a_chip_t* c) {
   c->state.mc = NON_MEM;
 
   // INT 
-  c->pinout &= 3 << PIN_SC0;
+  c->pinout |= 3 << PIN_SC0;
 
 }
 
