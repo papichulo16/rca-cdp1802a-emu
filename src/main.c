@@ -54,7 +54,6 @@ void emulator(){
 void usage() {
 
   printf("This is a clock-cycle accurate hardware emulator and cross-assembler for the legacy RCA CDP1802a 8-bit microprocessor, made from scratch. The goal of this project is to not only emulate a very unique and old chip architecture, but also allow the user to have the ability to design and create embedded systems with multiple moving parts and CPUs that communicate with each other.\n\n");
-  printf("Authors: Luis Abraham, Dominick Morales, Dylin Irons, Giovanni Williams.\n\n");
 
   printf("Usage: %s [options]\n\n", binary);
 
