@@ -27,8 +27,7 @@ void assembler() {
 void emulator(){
 
   printf("Starting emulator...\n");
-  hw_sys_t* sys = malloc(sizeof(hw_sys_t));
-  memset(sys, '\0', sizeof(hw_sys_t));
+  hw_sys_t* sys = calloc(1, sizeof(hw_sys_t));
 
   hw_sys_init(conf, sys, yaml);
   dbg_cmds_init();

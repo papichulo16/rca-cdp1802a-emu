@@ -55,17 +55,13 @@ void hw_cpu_init(cdp1802a_chip_t* chip, int decode_pins) {
   hw_sysbus_start(chip, decode_pins);
   chip->next = NULL;
   chip->bps = NULL;
-  chip->po_log = malloc(sizeof(dbg_po_t));
-
-  memset(chip->po_log, '\0', sizeof(dbg_po_t));
-
+  chip->po_log = calloc(1, sizeof(dbg_po_t));
 }
 
 void small_system(char* conf, hw_sys_t* sys) {
 
   // if no yaml file specified, just have one large fake memory chip
-  cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
-  memset(c, '\0', sizeof(cdp1802a_chip_t));
+  cdp1802a_chip_t* c = calloc(1, sizeof(cdp1802a_chip_t));
   hw_cpu_init(c, ADDR_DECODE_PINS);
 
   c->name = "lone_cpu";

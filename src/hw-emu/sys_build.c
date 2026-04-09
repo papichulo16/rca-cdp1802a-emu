@@ -202,11 +202,8 @@ void build_cpu_obj(hw_sys_t* sys, slave_t* slave) {
 
   decoder_lines = get_slave_w_name(sysbus_slave, "decoder_line_count");
 
-  mem_info_t* mem_arr = malloc(sizeof(mem_info_t) * mem_count);
-  cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
-
-  memset(c, '\0', sizeof(cdp1802a_chip_t));
-  memset(mem_arr, '\0', sizeof(mem_info_t) * mem_count);
+  mem_info_t* mem_arr = calloc(mem_count, sizeof(mem_info_t));
+  cdp1802a_chip_t* c = calloc(1, sizeof(cdp1802a_chip_t));
 
   hw_cpu_init(c, decoder_lines ? atoi(decoder_lines->value) : 0);
 
