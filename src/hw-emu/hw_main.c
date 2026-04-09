@@ -39,6 +39,7 @@ void hw_pin_bar_init(cdp1802a_chip_t* c) {
   set_bit(&c->pinout, PIN_EF4);
 
   c->regs.io = 1;
+  c->idle = 0;
 }
 
 void hw_sysbus_start(cdp1802a_chip_t* c, int decode_pins) {
@@ -64,6 +65,7 @@ void small_system(char* conf, hw_sys_t* sys) {
 
   // if no yaml file specified, just have one large fake memory chip
   cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
+  memset(c, '\0', sizeof(cdp1802a_chip_t));
   hw_cpu_init(c, ADDR_DECODE_PINS);
 
   c->name = "lone_cpu";
@@ -102,8 +104,9 @@ void hw_sys_cleanup(hw_sys_t* sys) {
   cdp1802a_chip_t* c = sys->head;
   cdp1802a_chip_t* tmp;
 
+  perif_mem_cleanup();
+
   while (c) {
-    perif_mem_cleanup();
     sysbus_cleanup(c->sysbus);
     free(c->sysbus);
 
@@ -123,10 +126,10 @@ void hw_sys_run(hw_sys_t* sys) {
 
     if (chip->state.mc == RDY || chip->idle) {
 
-      dbg_state_enum ret = dbg_ask(chip);
+      dbg_state_enum ret = dbg_ask(sys);
 
       while (ret == STATE_DBG)
-        ret = dbg_ask(chip);
+        ret = dbg_ask(sys);
 
       dbg_clr_po_log(chip);
 

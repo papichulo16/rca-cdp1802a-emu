@@ -39,7 +39,7 @@ typedef struct {
 void dbg_cmds_init();
 void dbg_cmds_clean();
 hw_sysbus_t* create_fake_sysb(cdp1802a_chip_t* c);
-dbg_state_enum dbg_ask(cdp1802a_chip_t* c);
+dbg_state_enum dbg_ask(hw_sys_t* sys);
 
 void dbg_log_po(cdp1802a_chip_t* c);
 void dbg_clr_po_log(cdp1802a_chip_t* c);
@@ -51,4 +51,5 @@ dbg_state_enum dbg_read_mem_printw(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_read_mem_instr(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_print_mc(cdp1802a_chip_t* c, char* args);
 dbg_state_enum dbg_do_int(cdp1802a_chip_t* c, char* args);
+dbg_state_enum dbg_cpuinfo(cdp1802a_chip_t* c, char* args);
 

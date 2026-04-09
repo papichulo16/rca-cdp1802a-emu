@@ -12,11 +12,11 @@
 #define MAX_CMD_SZ 0x80
 
 uint8_t stop = 1;
+uint8_t switched = 0;
 
 dbg_cmd_t* cmds_head = NULL;
 
 dbg_state_enum dbg_quit(cdp1802a_chip_t* c, char* args) { return STATE_QUIT; }
-
 dbg_state_enum dbg_step(cdp1802a_chip_t* c, char* args) { return STATE_CONT; }
 
 dbg_state_enum dbg_cont(cdp1802a_chip_t* c, char* args) {
@@ -36,7 +36,7 @@ dbg_state_enum dbg_clear(cdp1802a_chip_t* c, char* args) {
 dbg_state_enum dbg_help(cdp1802a_chip_t* c, char* args) {
   set_red();
 
-  printf("List of cmds: ");
+  printf("List of cmds: switch,");
 
   dbg_cmd_t* cur = cmds_head;
 
@@ -147,6 +147,16 @@ void handle_sigint(int sig) {
   stop = 1;
 }
 
+void change_sigint() {
+
+  struct sigaction sa;
+  sa.sa_handler = handle_sigint;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART; 
+
+  sigaction(SIGINT, &sa, NULL);
+}
+
 void dbg_cmds_init() {
 
   dbg_add_cmd("help", dbg_help);
@@ -163,15 +173,10 @@ void dbg_cmds_init() {
   dbg_add_cmd("readi", dbg_read_mem_instr);
 
   dbg_add_cmd("cpu", dbg_cpu);
+  dbg_add_cmd("cpuinfo", dbg_cpuinfo);
   dbg_add_cmd("tim_diag", dbg_print_mc);
 
-  struct sigaction sa;
-  sa.sa_handler = handle_sigint;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART; 
-
-  sigaction(SIGINT, &sa, NULL);
-
+  change_sigint();
 }
 
 void dbg_cmds_clean() {
@@ -200,14 +205,60 @@ void dbg_get_input(char* buf, int s) {
 
 }
 
-dbg_state_enum dbg_cmd_dispatch(cdp1802a_chip_t* c, char* cmd) {
+dbg_state_enum dbg_switch_cpus(hw_sys_t* sys, char* args) {
+
+  if (!args) {
+
+    set_red();
+    printf("Usage: switch <cpu_label>\n");
+    reset_color();
+
+    return STATE_DBG;
+  }
+
+  cdp1802a_chip_t* prev = NULL;
+  cdp1802a_chip_t* cur = sys->head;
+
+  while (cur) {
+
+    if (!strcmp(cur->name, args)) {
+
+      if (!prev)
+        return STATE_DBG;
+
+      prev->next = cur->next;
+      cur->next = sys->head;
+      sys->head = cur;
+      switched = 1;
+
+      return STATE_CONT;
+    }
+
+    prev = cur;
+    cur = cur->next;
+  }
+
+  set_red();
+  printf("CPU \"%s\" not found\n", args);
+  reset_color();
+
+  return STATE_DBG;
+}
+
+dbg_state_enum dbg_cmd_dispatch(hw_sys_t* sys, char* cmd) {
+
+  cdp1802a_chip_t* c = sys->head;
   char* space = strchr(cmd, ' ');
 
   *(char *) strchr(cmd, '\n') = '\0';
 
-  if (space) {
-
+  if (space)
     *space++ = '\0';
+
+  if (!strcmp("switch", cmd)) {
+
+    stop = 1;
+    return dbg_switch_cpus(sys, space);
   }
 
   dbg_cmd_t* cur = cmds_head;
@@ -264,7 +315,7 @@ void check_breakpoints(cdp1802a_chip_t* c, uint16_t pc) {
 void print_q_pin_state(cdp1802a_chip_t* c) {
 
   printf("\033[H\033[J"); // clear screen
-  printf("CPUs Q pin states:\n");
+  printf("Sysinfo CPUs:\n");
 
   cdp1802a_chip_t* cur = c;
 
@@ -279,8 +330,9 @@ void print_q_pin_state(cdp1802a_chip_t* c) {
   putchar('\n');
 }
 
-dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
+dbg_state_enum dbg_ask(hw_sys_t* sys) {
 
+  cdp1802a_chip_t* c = sys->head;
   uint16_t pc = c->regs.sp_r[c->regs.xp & 0xf];
 
   check_breakpoints(c, pc);
@@ -288,12 +340,13 @@ dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
   if (!stop)
     return STATE_CONT;
 
-  if (pc != last_pc) {
+  if (pc != last_pc || switched) {
 
     print_q_pin_state(c);
 
     print_cur_state(c, pc);
     last_pc = pc;
+    switched = 0;
   }
 
   char cmd[MAX_CMD_SZ];
@@ -302,6 +355,6 @@ dbg_state_enum dbg_ask(cdp1802a_chip_t* c) {
   while (strlen(cmd) == 0)
     dbg_get_input(cmd, MAX_CMD_SZ);
 
-  return dbg_cmd_dispatch(c, cmd);
+  return dbg_cmd_dispatch(sys, cmd);
 }
 

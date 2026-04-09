@@ -90,6 +90,13 @@ int perif_mem_push(uint8_t addr_lines) {
   return id;
 }
 
+uint16_t perif_mem_get_max(int id) {
+
+  perif_mem_t* p = perif_mem_find(id);
+
+  return p ? p->max : 0;
+}
+
 void perif_mem_entry(hw_sysbus_t* sysb, int id) {
 
   perif_mem_t* mem = perif_mem_find(id);

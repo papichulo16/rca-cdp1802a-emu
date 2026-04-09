@@ -204,9 +204,15 @@ void build_cpu_obj(hw_sys_t* sys, slave_t* slave) {
 
   mem_info_t* mem_arr = malloc(sizeof(mem_info_t) * mem_count);
   cdp1802a_chip_t* c = malloc(sizeof(cdp1802a_chip_t));
+
+  memset(c, '\0', sizeof(cdp1802a_chip_t));
+  memset(mem_arr, '\0', sizeof(mem_info_t) * mem_count);
+
   hw_cpu_init(c, decoder_lines ? atoi(decoder_lines->value) : 0);
 
-  c->name = slave->value;
+  c->name = malloc(strlen(slave->value));
+  strcpy(c->name, slave->value);
+
   c->next = sys->head;
   sys->head = c;
 

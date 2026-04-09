@@ -32,7 +32,25 @@ slaves:
                     value: "7"
                   - name: address_lines
                     value: "13"
+  - name: cpu
+    value: "cpu1" 
 
+    slaves:
+      - name: sysbus 
+        slaves:
+          - name: decoder_line_count
+            value: "3"
+
+          - name: devices 
+            value: "./blinky.o"
+            slaves:
+              - name: memory # 0x0-0x1fff
+                slaves:
+                  - name: decoder_line
+                    value: "0"
+                  - name: address_lines
+                    value: "13"
+ 
       #- name: EF1
         #value: "cpu1"
         #slaves:
