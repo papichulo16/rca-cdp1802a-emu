@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y make gcc flex git libyaml-dev
+RUN apt-get install -y make gcc flex git libyaml-dev gdb
 
 RUN git clone https://github.com/tlsa/libcyaml.git /tmp/libcyaml \
     && cd /tmp/libcyaml \

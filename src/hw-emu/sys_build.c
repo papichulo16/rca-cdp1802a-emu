@@ -207,8 +207,12 @@ void build_cpu_obj(hw_sys_t* sys, slave_t* slave) {
 
   hw_cpu_init(c, decoder_lines ? atoi(decoder_lines->value) : 0);
 
-  c->name = malloc(strlen(slave->value));
-  strcpy(c->name, slave->value);
+  if (slave->value) {
+
+    c->name = malloc(strlen(slave->value)+1);
+    strcpy(c->name, slave->value);
+  } else 
+    c->name = "no_name";
 
   c->next = sys->head;
   sys->head = c;
