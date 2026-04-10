@@ -116,16 +116,26 @@ void hw_sys_cleanup(hw_sys_t* sys) {
 
 void hw_sys_run(hw_sys_t* sys) {
 
+  // GOD THIS FUNCTION IS SO SHIT
+  // TODO: REWRITE
+
+  cdp1802a_chip_t* chip;
+
   while(1) {
 
-    cdp1802a_chip_t* chip = sys->head;
+    switch_cpu:
+    chip = sys->head;
 
+    // check if debug mode
     if (chip->state.mc == RDY || chip->idle) {
 
       dbg_state_enum ret = dbg_ask(sys);
 
       while (ret == STATE_DBG)
         ret = dbg_ask(sys);
+  
+      if (ret == STATE_SWITCH)
+        goto switch_cpu;
 
       dbg_clr_po_log(chip);
 
@@ -133,6 +143,7 @@ void hw_sys_run(hw_sys_t* sys) {
         return;
     }
 
+    // one clock cycle for all chips
     while (chip != NULL) {
 
       toggle_clock(chip);

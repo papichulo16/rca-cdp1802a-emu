@@ -231,7 +231,7 @@ dbg_state_enum dbg_switch_cpus(hw_sys_t* sys, char* args) {
       sys->head = cur;
       switched = 1;
 
-      return STATE_CONT;
+      return STATE_SWITCH;
     }
 
     prev = cur;

@@ -5,9 +5,12 @@
 #include "hw.h"
 
 typedef enum {
+
   STATE_DBG,
   STATE_CONT,
-  STATE_QUIT
+  STATE_QUIT,
+  STATE_SWITCH
+
 } dbg_state_enum;
 
 typedef dbg_state_enum (*dbg_entry)(cdp1802a_chip_t*, char*);

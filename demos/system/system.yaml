@@ -10,7 +10,7 @@ slaves:
             value: "3"
 
           - name: devices 
-            value: "./blinky.o"
+            value: "./demos/blinky/blinky.o"
             slaves:
               - name: memory # 0x0-0x1fff
                 slaves:
@@ -42,7 +42,7 @@ slaves:
             value: "3"
 
           - name: devices 
-            value: "./blinky.o"
+            value: "./demos/blinky/blinky.o"
             slaves:
               - name: memory # 0x0-0x1fff
                 slaves:
